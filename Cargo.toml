@@ -1,26 +1,10 @@
 [workspace]
 resolver = "2"
 members = [
-    "pal-edit",
-    "rat-cursor",
-    "rat-dialog",
-    "rat-event",
-    "rat-focus",
-    "rat-ftable",
-    "rat-markdown",
-    "rat-menu",
-    "rat-popup",
-    "rat-reloc",
-    "rat-salsa",
-    "rat-scrolled",
-    "rat-text",
     "rat-theme",
     "rat-theme2",
     "rat-theme3",
-    "rat-theme4",
     "rat-vim",
-    "rat-widget",
-    "rat-widget-extra",
 ]
 
 [workspace.lints.clippy]
