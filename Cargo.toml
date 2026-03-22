@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "rat-table",
     "rat-theme",
     "rat-theme2",
     "rat-theme3",
