@@ -121,18 +121,19 @@ impl<'a, T, Selection> Table<'a, T, Selection> {
 
     /// Set the table-data.
     #[inline]
-    pub fn data(mut self, data: impl Iterator<Item = T> + 'a) -> Self {
-        self.data = Some(Box::new(data));
+    pub fn data(mut self, data: impl IntoIterator<Item = T> + 'a) -> Self {
+        self.data = Some(Box::new(data.into_iter()));
         self
     }
 
-    pub fn render(mut self, render: impl TableRender<T> + 'a) -> Self {
-        self.render = Box::new(render);
-        self
-    }
-
+    /// Don't try to find the number of rows by iterating all values.
     pub fn no_row_count(mut self, no_row_count: bool) -> Self {
         self.no_row_count = no_row_count;
+        self
+    }
+
+    pub fn render_with(mut self, render: impl TableRender<T> + 'a) -> Self {
+        self.render = Box::new(render);
         self
     }
 
@@ -186,7 +187,7 @@ impl<'a, T, Selection> Table<'a, T, Selection> {
     /// Set the display width of the table.
     /// If this is not set, the width of the rendered area is used.
     #[inline]
-    pub fn table_width(mut self, width: TableWidth) -> Self {
+    pub fn layout_width(mut self, width: TableWidth) -> Self {
         self.layout_width = width;
         self
     }
@@ -513,6 +514,7 @@ impl<T, Selection> Table<'_, T, Selection> {
 
 impl<T, Selection> StatefulWidget for Table<'_, T, Selection>
 where
+    T: Copy,
     Selection: TableSelection,
 {
     type State = TableState<Selection>;
@@ -596,8 +598,8 @@ where
 
             row = Some(state.vscroll.offset());
             loop {
-                ctx.row_style = self.render.row_style(row.expect("row"), &value);
-                let row_height = self.render.row_height(row.expect("row"), &value);
+                ctx.row_style = self.render.row_style(row.expect("row"), value);
+                let row_height = self.render.row_height(row.expect("row"), value);
 
                 // We render each row to a temporary buffer.
                 // For ease of use we start each row at 0,0.
@@ -710,7 +712,7 @@ where
                             self.render.render_cell(
                                 row.expect("row"),
                                 col,
-                                &value,
+                                value,
                                 render_cell_area,
                                 &mut row_buf,
                                 &ctx,
@@ -742,66 +744,75 @@ where
                 row_y += render_row_area.height;
             }
 
-            // skip to a guess for the last page.
-            // the guess uses row-height is 1, which may read a few more lines than
-            // absolutely necessary.
-            let skip_rows = state
-                .rows
-                .saturating_sub(row.map_or(0, |v| v + 1))
-                .saturating_sub(state.table_area.height as usize);
-            // if we can still skip some rows, then the data so far is useless.
-            if skip_rows > 0 {
-                row_heights.clear();
-            }
-            let nth_row = skip_rows;
-            // collect the remaining row-heights.
-            if let Some(mut value) = data.nth(nth_row) {
-                let mut sum_height = row_heights.iter().sum::<u16>();
-                row = Some(row.map_or(nth_row, |row| row + nth_row + 1));
-                loop {
-                    let row_height = self.render.row_height(row.expect("row"), &value);
-                    row_heights.push(row_height);
-
-                    // Keep a rolling sum of the heights and drop unnecessary info.
-                    // We don't need more info, and there will be a lot more otherwise.
-                    sum_height += row_height;
-                    if sum_height.saturating_sub(row_heights.first().copied().unwrap_or_default())
-                        > state.table_area.height
-                    {
-                        let lost_height = row_heights.remove(0);
-                        sum_height -= lost_height;
-                    }
-
-                    value = if let Some(value) = data.nth(0) {
-                        value
-                    } else {
-                        break;
-                    };
-
-                    row = Some(row.expect("row") + 1);
+            if !self.no_row_count {
+                // skip to a guess for the last page.
+                // the guess uses row-height is 1, which may read a few more lines than
+                // absolutely necessary.
+                let skip_rows = state
+                    .rows
+                    .saturating_sub(row.map_or(0, |v| v + 1))
+                    .saturating_sub(state.table_area.height as usize);
+                // if we can still skip some rows, then the data so far is useless.
+                if skip_rows > 0 {
+                    row_heights.clear();
                 }
-            } else {
-                // skip failed, maybe again?
-                // leave everything as is and report later.
-            }
+                let nth_row = skip_rows;
+                // collect the remaining row-heights.
+                if let Some(mut value) = data.nth(nth_row) {
+                    let mut sum_height = row_heights.iter().sum::<u16>();
+                    row = Some(row.map_or(nth_row, |row| row + nth_row + 1));
+                    loop {
+                        let row_height = self.render.row_height(row.expect("row"), value);
+                        row_heights.push(row_height);
 
-            state.rows = row.map_or(0, |v| v + 1);
-            // have we got a page worth of data?
-            if let Some(last_page) = calc_last_page(state.table_area.height, row_heights) {
-                state.vscroll.set_max_offset(state.rows - last_page);
-            } else {
-                // we don't have enough data to establish the last page.
-                // either there are not enough rows or the given row-count
-                // was off. make a guess.
+                        // Keep a rolling sum of the heights and drop unnecessary info.
+                        // We don't need more info, and there will be a lot more otherwise.
+                        sum_height += row_height;
+                        if sum_height
+                            .saturating_sub(row_heights.first().copied().unwrap_or_default())
+                            > state.table_area.height
+                        {
+                            let lost_height = row_heights.remove(0);
+                            sum_height -= lost_height;
+                        }
+
+                        value = if let Some(value) = data.nth(0) {
+                            value
+                        } else {
+                            break;
+                        };
+
+                        row = Some(row.expect("row") + 1);
+                    }
+                } else {
+                    // skip failed, maybe again?
+                    // leave everything as is and report later.
+                }
+
+                state.rows = row.map_or(0, |v| v + 1);
+                // have we got a page worth of data?
+                if let Some(last_page) = calc_last_page(state.table_area.height, row_heights) {
+                    state.vscroll.set_max_offset(state.rows - last_page);
+                } else {
+                    // we don't have enough data to establish the last page.
+                    // either there are not enough rows or the given row-count
+                    // was off. make a guess.
+                    state.vscroll.set_max_offset(
+                        state.rows.saturating_sub(state.table_area.height as usize),
+                    );
+                }
                 state
-                    .vscroll
-                    .set_max_offset(state.rows.saturating_sub(state.table_area.height as usize));
+                    .hscroll
+                    .set_max_offset(width.saturating_sub(state.table_area.width) as usize);
+                state.selection.validate_rows(state.rows);
+                state.selection.validate_cols(state.columns);
+            } else {
+                state.rows = usize::MAX;
+                state.vscroll.set_max_offset(usize::MAX);
+                state
+                    .hscroll
+                    .set_max_offset(width.saturating_sub(state.table_area.width) as usize);
             }
-            state
-                .hscroll
-                .set_max_offset(width.saturating_sub(state.table_area.width) as usize);
-            state.selection.validate_rows(state.rows);
-            state.selection.validate_cols(state.columns);
         }
 
         if state.rows == 0 && self.show_empty && !state.inner.is_empty() {
