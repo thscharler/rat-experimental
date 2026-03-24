@@ -121,17 +121,19 @@ impl<'a, T, Selection> Table<'a, T, Selection> {
 
     /// Set the table-data.
     #[inline]
-    pub fn data(mut self, data: impl IntoIterator<Item = T> + 'a) -> Self {
+    pub fn data(mut self, data: impl IntoIterator<Item = T> + 'static) -> Self {
         self.data = Some(Box::new(data.into_iter()));
         self
     }
 
     /// Don't try to find the number of rows by iterating all values.
+    #[inline]
     pub fn no_row_count(mut self, no_row_count: bool) -> Self {
         self.no_row_count = no_row_count;
         self
     }
 
+    #[inline]
     pub fn render_with(mut self, render: impl TableRender<T> + 'a) -> Self {
         self.render = Box::new(render);
         self
@@ -598,8 +600,8 @@ where
 
             row = Some(state.vscroll.offset());
             loop {
-                ctx.row_style = self.render.row_style(row.expect("row"), value);
-                let row_height = self.render.row_height(row.expect("row"), value);
+                ctx.row_style = self.render.row_style(row.expect("row"), &value);
+                let row_height = self.render.row_height(row.expect("row"), &value);
 
                 // We render each row to a temporary buffer.
                 // For ease of use we start each row at 0,0.
@@ -712,7 +714,7 @@ where
                             self.render.render_cell(
                                 row.expect("row"),
                                 col,
-                                value,
+                                &value,
                                 render_cell_area,
                                 &mut row_buf,
                                 &ctx,
@@ -762,7 +764,7 @@ where
                     let mut sum_height = row_heights.iter().sum::<u16>();
                     row = Some(row.map_or(nth_row, |row| row + nth_row + 1));
                     loop {
-                        let row_height = self.render.row_height(row.expect("row"), value);
+                        let row_height = self.render.row_height(row.expect("row"), &value);
                         row_heights.push(row_height);
 
                         // Keep a rolling sum of the heights and drop unnecessary info.

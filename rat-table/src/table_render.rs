@@ -8,13 +8,13 @@ use std::fmt::{Debug, Formatter};
 pub trait TableRender<T> {
     /// Row height for the given item.
     #[allow(unused_variables)]
-    fn row_height(&self, row: usize, v: T) -> u16 {
+    fn row_height(&self, row: usize, v: &T) -> u16 {
         1
     }
 
     /// Row style for the current line.
     #[allow(unused_variables)]
-    fn row_style(&self, row: usize, v: T) -> Option<Style> {
+    fn row_style(&self, row: usize, v: &T) -> Option<Style> {
         None
     }
 
@@ -23,7 +23,7 @@ pub trait TableRender<T> {
         &self,
         row: usize,
         column: usize,
-        v: T,
+        v: &T,
         area: Rect,
         buf: &mut Buffer,
         ctx: &TableContext, //
@@ -39,5 +39,5 @@ impl<'a, T> Debug for dyn TableRender<T> {
 pub(crate) struct DefaultRender;
 
 impl<T> TableRender<T> for DefaultRender {
-    fn render_cell(&self, _: usize, _: usize, _: T, _: Rect, _: &mut Buffer, _: &TableContext) {}
+    fn render_cell(&self, _: usize, _: usize, _: &T, _: Rect, _: &mut Buffer, _: &TableContext) {}
 }

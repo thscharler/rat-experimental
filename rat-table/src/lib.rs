@@ -9,6 +9,8 @@ mod table_render;
 mod table_selection;
 mod table_state;
 mod table_style;
+mod table_vec;
+mod table_vec_state;
 mod util;
 
 pub use table::*;
