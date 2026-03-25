@@ -1,4 +1,5 @@
 mod cell_selection;
+pub mod core;
 pub mod event;
 mod no_selection;
 mod row_selection;
@@ -19,6 +20,24 @@ pub use table_render::*;
 pub use table_selection::*;
 pub use table_state::*;
 pub use table_style::*;
+pub use table_vec::*;
+pub use table_vec_state::*;
+
+/// Width for the table-layout.
+#[derive(Debug, Default)]
+pub enum TableWidth {
+    /// Fixed width. Columns are layout for this size.
+    Length(u16),
+    /// Width is the sum of the columns. If the width is
+    /// larger than the area, horizontal scrolling is used.
+    ///
+    /// Note: Constraint::Fill is useless for this.
+    /// Such columns will assume a width of 10.
+    Columns,
+    /// Fit the columns to the table-area.
+    #[default]
+    Area,
+}
 
 /// Different selection models for Table.
 pub mod selection {

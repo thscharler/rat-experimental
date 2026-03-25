@@ -11,7 +11,6 @@ use std::collections::HashSet;
 
 pub struct TableVecState<T, Selection = RowSelection> {
     pub table: TableState<Selection>,
-
     pub data: Vec<T>,
 
     pub non_exhaustive: NonExhaustive,
@@ -260,26 +259,31 @@ impl<T, Selection: TableSelection> TableVecState<T, Selection> {
 }
 
 impl<T, Selection: TableSelection> TableVecState<T, Selection> {
+    /// Data-vec changed.
     pub fn rows_changed(&mut self) {
         self.table.rows_changed(self.data.len());
     }
 
+    /// Set the data-vec.
     pub fn set_data(&mut self, data: Vec<T>) {
         self.data = data;
         self.table.rows_changed(self.data.len());
     }
 
+    /// Add a row to the internal data-vec.
     pub fn append_row(&mut self, value: T) {
         let n = self.data.len();
         self.data.push(value);
         self.table.items_added(n, 1);
     }
 
+    /// Insert a row to the internal data-vec.
     pub fn insert_row(&mut self, row: usize, value: T) {
         self.data.insert(row, value);
         self.table.items_added(row, 1);
     }
 
+    /// Remove a row from the internal data-vec.
     pub fn remove_row(&mut self, row: usize) -> T {
         let r = self.data.remove(row);
         self.table.items_removed(row, 1);
@@ -412,7 +416,7 @@ impl<T> TableVecState<T, RowSetSelection> {
     }
 
     /// Move the selection down n rows.
-    /// Ensures the row is visible afterwards.
+    /// Ensures the row is visible afterward.
     #[inline]
     pub fn move_down(&mut self, n: usize, extend: bool) -> bool {
         self.table.move_down(n, extend)
@@ -473,28 +477,28 @@ impl<T> TableVecState<T, CellSelection> {
     }
 
     /// Move the selection up n rows.
-    /// Ensures the row is visible afterwards.
+    /// Ensures the row is visible afterward.
     #[inline]
     pub fn move_up(&mut self, n: usize) -> bool {
         self.table.move_up(n)
     }
 
     /// Move the selection down n rows.
-    /// Ensures the row is visible afterwards.
+    /// Ensures the row is visible afterward.
     #[inline]
     pub fn move_down(&mut self, n: usize) -> bool {
         self.table.move_down(n)
     }
 
     /// Move the selection left n columns.
-    /// Ensures the row is visible afterwards.
+    /// Ensures the row is visible afterward.
     #[inline]
     pub fn move_left(&mut self, n: usize) -> bool {
         self.table.move_left(n)
     }
 
     /// Move the selection right n columns.
-    /// Ensures the row is visible afterwards.
+    /// Ensures the row is visible afterward.
     #[inline]
     pub fn move_right(&mut self, n: usize) -> bool {
         self.table.move_right(n)

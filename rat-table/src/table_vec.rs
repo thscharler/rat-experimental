@@ -1,6 +1,7 @@
+use crate::core::TableCore;
 use crate::row_selection::RowSelection;
 use crate::table_vec_state::TableVecState;
-use crate::{Table, TableRender, TableSelection, TableStyle, TableWidth};
+use crate::{TableRender, TableSelection, TableStyle, TableWidth};
 use rat_scrolled::Scroll;
 use ratatui_core::buffer::Buffer;
 use ratatui_core::layout::{Constraint, Flex, Rect};
@@ -13,7 +14,7 @@ use std::borrow::Cow;
 /// Table using internal storage to hold a Vec of
 /// items that are the table-items.
 pub struct TableVec<'a, T, Selection = RowSelection> {
-    table: Table<'a, &'a T, Selection>,
+    table: TableCore<'a, T, Selection>,
 }
 
 impl<'a, T, Selection> Default for TableVec<'a, T, Selection> {
@@ -32,7 +33,7 @@ impl<'a, T: 'a, Selection> TableVec<'a, T, Selection> {
         Self::default()
     }
 
-    pub fn render_with(mut self, render: impl TableRender<&'a T> + 'a) -> Self {
+    pub fn render_with(mut self, render: impl for<'b> TableRender<&'b T> + 'a) -> Self {
         self.table = self.table.render_with(render);
         self
     }
@@ -275,7 +276,9 @@ where
     type State = TableVecState<T, Selection>;
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-        let table = self.table.data(&state.data);
-        table.render(area, buf, &mut state.table);
+        let mut iter = state.data.iter();
+        let data = Some((&mut iter) as &mut dyn Iterator<Item = &T>);
+        // let table = self.table.data(&state.data);
+        self.table.render(data, area, buf, &mut state.table);
     }
 }
