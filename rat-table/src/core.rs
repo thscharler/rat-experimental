@@ -492,13 +492,13 @@ fn layout_areas<T, Selection>(widget: &TableCore<'_, T, Selection>, area: Rect) 
     Layout::vertical(heights).split(area)
 }
 
-impl<T, Selection> TableCore<'_, T, Selection>
+impl<'a, T, Selection> TableCore<'a, T, Selection>
 where
     Selection: TableSelection,
 {
     pub fn render(
         self,
-        data: Option<&mut dyn Iterator<Item = &T>>,
+        data: Option<&mut dyn Iterator<Item = &'a T>>,
         area: Rect,
         buf: &mut Buffer,
         state: &mut TableState<Selection>,
@@ -596,8 +596,8 @@ pub fn render_table<'a, T, Selection: TableSelection>(
 
         row = Some(state.vscroll.offset());
         loop {
-            ctx.row_style = widget.render.row_style(row.expect("row"), &value);
-            let row_height = widget.render.row_height(row.expect("row"), &value);
+            ctx.row_style = widget.render.row_style(row.expect("row"), value);
+            let row_height = widget.render.row_height(row.expect("row"), value);
 
             // We render each row to a temporary buffer.
             // For ease of use we start each row at 0,0.
@@ -760,7 +760,7 @@ pub fn render_table<'a, T, Selection: TableSelection>(
                 let mut sum_height = row_heights.iter().sum::<u16>();
                 row = Some(row.map_or(nth_row, |row| row + nth_row + 1));
                 loop {
-                    let row_height = widget.render.row_height(row.expect("row"), &value);
+                    let row_height = widget.render.row_height(row.expect("row"), value);
                     row_heights.push(row_height);
 
                     // Keep a rolling sum of the heights and drop unnecessary info.
