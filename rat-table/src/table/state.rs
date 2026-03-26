@@ -14,6 +14,7 @@ use rat_reloc::RelocatableState;
 use ratatui_core::layout::Rect;
 use std::collections::HashSet;
 
+/// State for the [Table].
 pub struct TableState<Selection = RowSelection> {
     pub core: TableCoreState<Selection>,
     pub non_exhaustive: NonExhaustive,

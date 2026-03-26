@@ -4,17 +4,17 @@ use crate::selection::TableSelection;
 use crate::selection::cell::CellSelection;
 use crate::selection::row::RowSelection;
 use crate::selection::rowset::RowSetSelection;
-use rat_cursor::HasScreenCursor;
 use rat_event::crossterm::event::Event;
 use rat_event::util::MouseFlags;
 use rat_event::{DoubleClick, HandleEvent, ct_event};
-use rat_focus::{FocusBuilder, FocusFlag, HasFocus};
+use rat_focus::{FocusFlag, HasFocus};
 use rat_reloc::{RelocatableState, relocate_areas};
 use rat_scrolled::ScrollState;
 use ratatui_core::layout::Rect;
 use std::cmp::min;
 use std::collections::HashSet;
 
+/// State for the table-core.
 pub struct TableCoreState<Selection = RowSelection> {
     /// Current focus state.
     /// __read+write__
@@ -118,28 +118,6 @@ impl<Selection: Default> Default for TableCoreState<Selection> {
     }
 }
 
-// impl<Selection> HasFocus for TableCoreState<Selection> {
-//     fn build(&self, builder: &mut FocusBuilder) {
-//         builder.leaf_widget(self);
-//     }
-// 
-//     #[inline]
-//     fn focus(&self) -> FocusFlag {
-//         self.focus.clone()
-//     }
-// 
-//     #[inline]
-//     fn area(&self) -> Rect {
-//         self.area
-//     }
-// }
-
-// impl<Selection> HasScreenCursor for TableCoreState<Selection> {
-//     fn screen_cursor(&self) -> Option<(u16, u16)> {
-//         None
-//     }
-// }
-
 impl<Selection> RelocatableState for TableCoreState<Selection> {
     fn relocate(&mut self, shift: (i16, i16), clip: Rect) {
         self.area.relocate(shift, clip);
@@ -155,7 +133,6 @@ impl<Selection> RelocatableState for TableCoreState<Selection> {
     }
 }
 
-// Baseline
 impl<Selection> TableCoreState<Selection>
 where
     Selection: Default,
@@ -402,7 +379,6 @@ impl<Selection: TableSelection> TableCoreState<Selection> {
     /// Ensures that the given row is visible.
     /// Caveat: This doesn't work nicely if you have varying row-heights.
     /// Caveat: Number of rows needs to be correct.
-    // todo: fix for varying heights
     pub fn scroll_to_row(&mut self, pos: usize) -> bool {
         if pos >= self.rows {
             false
@@ -472,7 +448,6 @@ impl<Selection: TableSelection> TableCoreState<Selection> {
 
 impl TableCoreState<RowSelection> {
     /// When scrolling the table, change the selection instead of the offset.
-    // todo: add for other selection
     #[inline]
     pub fn set_scroll_selection(&mut self, scroll: bool) {
         self.selection.set_scroll_selected(scroll);
@@ -521,7 +496,7 @@ impl TableCoreState<RowSelection> {
         if self.vscroll.max_offset() > 0 {
             (self.rows * offset) / self.vscroll.max_offset()
         } else {
-            0 // todo: what does this mean?
+            0
         }
     }
 
@@ -765,6 +740,10 @@ impl TableCoreState<CellSelection> {
 impl<Selection> HandleEvent<Event, DoubleClick, DoubleClickOutcome> for TableCoreState<Selection> {
     /// Handles double-click events on the table.
     fn handle(&mut self, event: &Event, _keymap: DoubleClick) -> DoubleClickOutcome {
+        if !self.focus.has_mouse_focus() {
+            return DoubleClickOutcome::Continue;
+        }
+
         match event {
             ct_event!(mouse any for m) if self.mouse.doubleclick(self.table_area, m) => {
                 if let Some((col, row)) = self.cell_at_clicked((m.column, m.row)) {

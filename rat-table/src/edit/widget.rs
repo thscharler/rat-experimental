@@ -7,12 +7,12 @@ use ratatui_core::buffer::Buffer;
 use ratatui_core::layout::Rect;
 use ratatui_core::widgets::StatefulWidget;
 
-/// Widget that supports row-wise editing of a table.
+/// Table-widget and inline editor for one table-row.
 ///
 /// This widget keeps a `Vec<RowData>` and modifies it.
 ///
-/// It's parameterized with a `Editor` widget, that renders
-/// the input line and handles events.
+/// It's parameterized with an `Editor` widget, that renders
+/// the input-widgets.
 pub struct TableEditVec<'a, T, E>
 where
     E: TableEditor<T> + 'a,

@@ -11,10 +11,18 @@ use rat_focus::{FocusBuilder, FocusFlag, HasFocus, Navigation};
 use rat_reloc::RelocatableState;
 use ratatui_core::layout::Rect;
 
-/// State for EditTable.
+/// State for [TableEditVec].
 ///
-/// Contains `mode` to differentiate between edit/non-edit.
-/// This will lock the focus to the input line while editing.
+/// It has a mode-field for insert/edit/view.
+///
+/// __Focus__
+///
+/// When editing the widgets blocks the Focus it is part of.
+/// You can't leave the table as long as it's editing.
+///
+/// It is intended that the editor-widget sets up a separate
+/// Focus for all the widgets and navigates independently of
+/// the main application Focus.
 ///
 pub struct TableEditVecState<T, E> {
     /// Editing mode.

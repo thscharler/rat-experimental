@@ -7,8 +7,9 @@ use ratatui_core::buffer::Buffer;
 use ratatui_core::layout::Rect;
 use ratatui_core::widgets::StatefulWidget;
 
-/// Table using internal storage to hold a Vec of
-/// items that are the table-items.
+///
+/// A table that holds a Vec of the data in its state.
+///
 pub struct TableVec<'a, T, Selection = RowSelection> {
     core: TableCore<'a, T, Selection>,
 }

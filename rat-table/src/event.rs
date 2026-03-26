@@ -10,6 +10,8 @@ pub enum TableOutcome {
     Continue,
     /// The event was handled, no repaint necessary.
     Unchanged,
+    /// Header column clicked.
+    Header(usize),
     /// The event was handled, repaint necessary.
     Changed,
     /// The selection has changed.
@@ -29,6 +31,7 @@ impl From<TableOutcome> for Outcome {
             TableOutcome::Unchanged => Outcome::Unchanged,
             TableOutcome::Changed => Outcome::Changed,
             TableOutcome::Selected => Outcome::Changed,
+            TableOutcome::Header(_) => Outcome::Unchanged,
         }
     }
 }

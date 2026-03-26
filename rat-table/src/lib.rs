@@ -1,17 +1,23 @@
 pub mod core;
-pub mod edit;
-pub mod event;
-pub mod render;
-pub mod selection;
-pub mod style;
-pub mod table;
-mod util;
 mod derive;
-pub mod vec;
+mod edit;
+pub mod event;
+mod render;
+pub mod selection;
+mod style;
+mod table;
+mod util;
+mod vec;
+
+pub use edit::{Mode, TableEditVec, TableEditVecState, TableEditor};
+pub use render::{RenderContext, RenderTableRow};
+pub use style::TableStyle;
+pub use table::{Table, TableState};
+pub use vec::{TableVec, TableVecState};
 
 /// Width for the table-layout.
 #[derive(Debug, Default)]
-pub enum TableWidth {
+pub enum LayoutWidth {
     /// Fixed width. Columns are layout for this size.
     Length(u16),
     /// Width is the sum of the columns. If the width is

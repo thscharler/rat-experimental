@@ -1,16 +1,20 @@
+//!
+//! Table-widget and row-editor.
+//!
+
 use rat_focus::HasFocus;
 use ratatui_core::buffer::Buffer;
 use ratatui_core::layout::Rect;
 
-mod widget;
 mod state;
+mod widget;
 
-pub use widget::*;
 pub use state::*;
+pub use widget::*;
 
-/// StatefulWidget alike trait.
+/// This trait renders the row-editor widgets.
 ///
-/// This one takes a slice of areas for all the cells in the table,
+/// It gets a slice of areas for all the cells in the table,
 /// and renders all input widgets as it needs.
 pub trait TableEditor<T> {
     /// State associated with the stateful widget.
@@ -26,7 +30,9 @@ pub trait TableEditor<T> {
     );
 }
 
+///
 /// Trait for the editor widget state
+///
 pub trait TableEditorState<T>: HasFocus {
     /// Some external context.
     type Context<'a>;

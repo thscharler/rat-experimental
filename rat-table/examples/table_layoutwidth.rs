@@ -9,7 +9,7 @@ use format_num_pattern::NumberFormat;
 use rat_scrolled::{Scroll, ScrollStyle};
 use rat_table::event::Outcome;
 use rat_table::selection::{RowSelection, rowselection};
-use rat_table::{Table, TableContext, RenderTableRow, TableState, TableWidth};
+use rat_table::{Table, TableContext, RenderTableRow, TableState, LayoutWidth};
 use rat_theme4::StyleName;
 use rat_theme4::theme::SalsaTheme;
 use ratatui_core::buffer::Buffer;
@@ -118,7 +118,7 @@ fn render(
             Constraint::Length(3),
         ])
         // use a fixed total.
-        .layout_width(TableWidth::Length(150))
+        .layout_width(LayoutWidth::Length(150))
         .column_spacing(1)
         .header(vec!["Nr", "Text", "Val1", "Val2", "State"])
         .footer(vec!["a", "b", "c", "d", "e"])

@@ -1,8 +1,9 @@
+//! Selection models for the table.
+
 pub mod cell;
 pub mod none;
 pub mod row;
 pub mod rowset;
-
 
 /// Trait for the different selection models used by Table.
 pub trait TableSelection {

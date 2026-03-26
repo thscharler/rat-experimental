@@ -308,6 +308,12 @@ impl HandleEvent<Event, MouseOnly, TableOutcome> for TableCoreState<CellSelectio
                     } else {
                         TableOutcome::Continue
                     }
+                } else if self.header_area.contains((*column, *row).into()) {
+                    if let Some(col) = self.column_at_clicked((*column, *row)) {
+                        TableOutcome::Header(col)
+                    } else {
+                        TableOutcome::Continue
+                    }
                 } else {
                     TableOutcome::Continue
                 }

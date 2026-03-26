@@ -1,5 +1,5 @@
 use crate::_private::NonExhaustive;
-use crate::TableWidth;
+use crate::LayoutWidth;
 use crate::core::TableCoreState;
 use crate::render::{DefaultRender, RenderContext, RenderTableRow};
 use crate::selection::TableSelection;
@@ -19,7 +19,12 @@ use std::cmp::max;
 use std::marker::PhantomData;
 use std::rc::Rc;
 
-/// Table widget.
+/// The table-core.
+///
+/// Holds all the render-parameters and does the actual
+/// rendering of the table.
+///
+/// It is used as the backend for the user-facing widgets.
 pub struct TableCore<'a, T, Selection = RowSelection> {
     header: Vec<Text<'a>>,
     footer: Vec<Text<'a>>,
@@ -29,7 +34,7 @@ pub struct TableCore<'a, T, Selection = RowSelection> {
     widths: Vec<Constraint>,
     flex: Flex,
     column_spacing: u16,
-    layout_width: TableWidth,
+    layout_width: LayoutWidth,
 
     style: Style,
     block: Option<Block<'a>>,
@@ -165,7 +170,7 @@ impl<'a, T, Selection> TableCore<'a, T, Selection> {
     /// Set the display width of the table.
     /// If this is not set, the width of the rendered area is used.
     #[inline]
-    pub fn layout_width(mut self, width: TableWidth) -> Self {
+    pub fn layout_width(mut self, width: LayoutWidth) -> Self {
         self.layout_width = width;
         self
     }
@@ -425,8 +430,8 @@ impl<'a, T, Selection> TableCore<'a, T, Selection> {
 
 fn total_width<T, Selection>(widget: &TableCore<'_, T, Selection>, area_width: u16) -> u16 {
     match widget.layout_width {
-        TableWidth::Length(len) => len,
-        TableWidth::Columns => {
+        LayoutWidth::Length(len) => len,
+        LayoutWidth::Columns => {
             let mut width = 0;
             for w in widget.widths.iter().copied() {
                 match w {
@@ -447,7 +452,7 @@ fn total_width<T, Selection>(widget: &TableCore<'_, T, Selection>, area_width: u
             }
             max(width, area_width)
         }
-        TableWidth::Area => area_width,
+        LayoutWidth::Area => area_width,
     }
 }
 

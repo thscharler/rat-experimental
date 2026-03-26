@@ -7,8 +7,13 @@ use ratatui_core::buffer::Buffer;
 use ratatui_core::layout::Rect;
 use ratatui_core::widgets::StatefulWidget;
 
-/// Table using internal storage to hold a Vec of
-/// items that are the table-items.
+/// Table widget that renders an Iterator.
+///
+/// Rendering of one row/value of the table is forwarded
+/// to an instance of [RenderTableRow].
+///
+/// This will do minimal rendering of the visible rows/cells
+/// of the table.
 pub struct Table<'a, T, Selection = RowSelection> {
     core: TableCore<'a, T, Selection>,
     data: Option<Box<dyn Iterator<Item = &'a T> + 'a>>,

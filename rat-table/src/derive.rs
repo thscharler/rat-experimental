@@ -1,7 +1,12 @@
 #[macro_export]
 macro_rules! derive_table_widget {
     () => {
-        /// Don't try to find the number of rows by iterating all values.
+        /// Normally rendering runs the iterator to the end to find
+        /// out the number of rows for the table.
+        ///
+        /// For very long list this can be noticeably slow.
+        /// If you set this flag the number of rows will be set to
+        /// usize::MAX instead.
         #[inline]
         pub fn no_row_count(mut self, no_row_count: bool) -> Self {
             self.core = self.core.no_row_count(no_row_count);
@@ -38,6 +43,9 @@ macro_rules! derive_table_widget {
         }
 
         /// Column widths as Constraints.
+        ///
+        /// The table-width that is used for these constraints
+        /// is influenced by [layout_width].
         #[inline]
         pub fn widths<I>(mut self, widths: I) -> Self
         where
@@ -48,7 +56,7 @@ macro_rules! derive_table_widget {
             self
         }
 
-        /// Flex for layout.
+        /// Flex-value for layout calculation.
         #[inline]
         pub fn flex(mut self, flex: ratatui_core::layout::Flex) -> Self {
             self.core = self.core.flex(flex);
@@ -62,10 +70,12 @@ macro_rules! derive_table_widget {
             self
         }
 
-        /// Set the display width of the table.
-        /// If this is not set, the width of the rendered area is used.
+        /// Set the width used for the table-layout.
+        ///
+        /// If the width is wider than the area, horizontal scrolling
+        /// is used.
         #[inline]
-        pub fn layout_width(mut self, width: $crate::TableWidth) -> Self {
+        pub fn layout_width(mut self, width: $crate::LayoutWidth) -> Self {
             self.core = self.core.layout_width(width);
             self
         }
