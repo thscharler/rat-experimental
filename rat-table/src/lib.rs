@@ -4,12 +4,10 @@ pub mod render;
 pub mod selection;
 pub mod style;
 pub mod table;
-mod table_edit;
-mod table_state;
+pub mod edit;
 mod util;
 pub mod vec;
 
-pub use table_edit::*;
 
 /// Width for the table-layout.
 #[derive(Debug, Default)]
