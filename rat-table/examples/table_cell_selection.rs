@@ -8,7 +8,7 @@ use format_num_pattern::NumberFormat;
 use rat_event::Outcome;
 use rat_scrolled::{Scroll, ScrollStyle};
 use rat_table::selection::{CellSelection, cellselection};
-use rat_table::{Table, TableContext, TableRender, TableState};
+use rat_table::{Table, TableContext, RenderTableRow, TableState};
 use rat_theme4::theme::SalsaTheme;
 use rat_theme4::{RatWidgetColor, StyleName};
 use ratatui_core::buffer::Buffer;
@@ -65,7 +65,7 @@ fn render(
         .split(area);
 
     struct RenderSample;
-    impl TableRender<&Sample> for RenderSample {
+    impl RenderTableRow<&Sample> for RenderSample {
         fn render_cell(
             &self,
             row: usize,

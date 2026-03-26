@@ -1,9 +1,14 @@
+pub mod cell;
+pub mod none;
+pub mod row;
+pub mod rowset;
+
 
 /// Trait for the different selection models used by Table.
 pub trait TableSelection {
     /// Clear the selection.
     fn clear(&mut self);
-    
+
     /// Row is selected. This can be separate from `is_selected_cell`.
     fn is_selected_row(&self, row: usize) -> bool;
 

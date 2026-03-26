@@ -1,10 +1,11 @@
 use crate::_private::NonExhaustive;
-use crate::selection::RowSelection;
-use crate::table_render::DefaultRender;
-use crate::table_state::TableState;
-use crate::table_style::TableStyle;
+use crate::TableWidth;
+use crate::core::TableCoreState;
+use crate::render::{DefaultRender, RenderContext, RenderTableRow};
+use crate::selection::TableSelection;
+use crate::selection::row::RowSelection;
+use crate::style::TableStyle;
 use crate::util::{fallback_select_style, revert_style, transfer_buffer};
-use crate::{TableContext, TableRender, TableSelection, TableWidth};
 use rat_focus::HasFocus;
 use rat_scrolled::{Scroll, ScrollArea, ScrollAreaState};
 use ratatui_core::buffer::Buffer;
@@ -22,7 +23,7 @@ use std::rc::Rc;
 pub struct TableCore<'a, T, Selection = RowSelection> {
     header: Vec<Text<'a>>,
     footer: Vec<Text<'a>>,
-    render: Box<dyn for<'b> TableRender<&'b T> + 'a>,
+    render: Box<dyn for<'b> RenderTableRow<&'b T> + 'a>,
     no_row_count: bool,
 
     widths: Vec<Constraint>,
@@ -109,7 +110,7 @@ impl<'a, T, Selection> TableCore<'a, T, Selection> {
     }
 
     #[inline]
-    pub fn render_with(mut self, render: impl for<'b> TableRender<&'b T> + 'a) -> Self {
+    pub fn render_with(mut self, render: impl for<'b> RenderTableRow<&'b T> + 'a) -> Self {
         self.render = Box::new(render);
         self
     }
@@ -501,7 +502,7 @@ where
         data: Option<&mut dyn Iterator<Item = &'a T>>,
         area: Rect,
         buf: &mut Buffer,
-        state: &mut TableState<Selection>,
+        state: &mut TableCoreState<Selection>,
     ) {
         if let Some(mut data) = data {
             render_table(&self, Some(&mut data), area, buf, state);
@@ -516,7 +517,7 @@ pub fn render_table<'a, T, Selection: TableSelection>(
     mut data: Option<&mut dyn Iterator<Item = &T>>,
     area: Rect,
     buf: &mut Buffer,
-    state: &mut TableState<Selection>,
+    state: &mut TableCoreState<Selection>,
 ) {
     state.rows = data.as_mut().map(|v| v.size_hint().0).unwrap_or(0);
     state.columns = widget.widths.len();
@@ -573,7 +574,7 @@ pub fn render_table<'a, T, Selection: TableSelection>(
     let mut row_y = state.table_area.y;
     let mut row_heights = Vec::new();
 
-    let mut ctx = TableContext {
+    let mut ctx = RenderContext {
         focus: state.focus.get(),
         selected_cell: false,
         selected_row: false,
@@ -814,7 +815,7 @@ pub fn render_table<'a, T, Selection: TableSelection>(
 
     if state.rows == 0 && widget.show_empty && !state.inner.is_empty() {
         let area = Rect::new(state.table_area.x, state.table_area.y, 3, 1);
-        let style = if state.is_focused() {
+        let style = if state.focus.is_focused() {
             widget.focus_style.unwrap_or_default()
         } else {
             widget.style
@@ -848,7 +849,7 @@ fn render_footer<T, Selection: TableSelection>(
     l_spacers: &[Rect],
     area: Rect,
     buf: &mut Buffer,
-    state: &mut TableState<Selection>,
+    state: &mut TableCoreState<Selection>,
 ) {
     let height = widget
         .footer
@@ -914,7 +915,7 @@ fn render_header<T, Selection: TableSelection>(
     l_spacers: &[Rect],
     area: Rect,
     buf: &mut Buffer,
-    state: &mut TableState<Selection>,
+    state: &mut TableCoreState<Selection>,
 ) {
     let height = widget
         .header
@@ -975,7 +976,7 @@ fn calculate_column_areas<Selection>(
     columns: usize,
     l_columns: &[Rect],
     l_spacers: &[Rect],
-    state: &mut TableState<Selection>,
+    state: &mut TableCoreState<Selection>,
 ) {
     state.column_areas.clear();
     state.column_layout.clear();

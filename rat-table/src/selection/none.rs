@@ -1,6 +1,6 @@
-use crate::TableSelection;
+use crate::core::TableCoreState;
 use crate::event::TableOutcome;
-use crate::table_state::TableState;
+use crate::selection::TableSelection;
 use rat_event::{HandleEvent, MouseOnly, Regular, ct_event};
 use rat_focus::HasFocus;
 use rat_scrolled::ScrollAreaState;
@@ -42,9 +42,9 @@ impl TableSelection for NoSelection {
     fn items_removed(&mut self, _pos: usize, _n: usize, _rows: usize) {}
 }
 
-impl HandleEvent<Event, Regular, TableOutcome> for TableState<NoSelection> {
+impl HandleEvent<Event, Regular, TableOutcome> for TableCoreState<NoSelection> {
     fn handle(&mut self, event: &Event, _keymap: Regular) -> TableOutcome {
-        let res = if self.is_focused() {
+        let res = if self.focus.is_focused() {
             match event {
                 ct_event!(keycode press Up) => {
                     if self.scroll_up(1) {
@@ -134,9 +134,9 @@ impl HandleEvent<Event, Regular, TableOutcome> for TableState<NoSelection> {
     }
 }
 
-impl HandleEvent<Event, MouseOnly, TableOutcome> for TableState<NoSelection> {
+impl HandleEvent<Event, MouseOnly, TableOutcome> for TableCoreState<NoSelection> {
     fn handle(&mut self, event: &Event, _keymap: MouseOnly) -> TableOutcome {
-        if !self.has_mouse_focus() {
+        if !self.focus.has_mouse_focus() {
             return TableOutcome::Continue;
         }
 
@@ -199,7 +199,7 @@ impl HandleEvent<Event, MouseOnly, TableOutcome> for TableState<NoSelection> {
 /// Table events are only processed if focus is true.
 /// Mouse events are processed if they are in range.
 pub fn handle_events(
-    state: &mut TableState<NoSelection>,
+    state: &mut TableCoreState<NoSelection>,
     focus: bool,
     event: &Event,
 ) -> TableOutcome {
@@ -208,6 +208,6 @@ pub fn handle_events(
 }
 
 /// Handle only mouse-events.
-pub fn handle_mouse_events(state: &mut TableState<NoSelection>, event: &Event) -> TableOutcome {
+pub fn handle_mouse_events(state: &mut TableCoreState<NoSelection>, event: &Event) -> TableOutcome {
     state.handle(event, MouseOnly)
 }

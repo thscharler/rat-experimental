@@ -1,6 +1,6 @@
-use crate::TableSelection;
+use crate::core::TableCoreState;
 use crate::event::TableOutcome;
-use crate::table_state::TableState;
+use crate::selection::TableSelection;
 use rat_event::crossterm::event::Event;
 use rat_event::{ConsumedEvent, HandleEvent, MouseOnly, Regular, ct_event};
 use rat_focus::HasFocus;
@@ -136,9 +136,9 @@ impl RowSelection {
     }
 }
 
-impl HandleEvent<Event, Regular, TableOutcome> for TableState<RowSelection> {
+impl HandleEvent<Event, Regular, TableOutcome> for TableCoreState<RowSelection> {
     fn handle(&mut self, event: &Event, _keymap: Regular) -> TableOutcome {
-        let res = if self.is_focused() {
+        let res = if self.focus.is_focused() {
             match event {
                 ct_event!(keycode press Up) => {
                     if self.move_up(1) {
@@ -228,9 +228,9 @@ impl HandleEvent<Event, Regular, TableOutcome> for TableState<RowSelection> {
     }
 }
 
-impl HandleEvent<Event, MouseOnly, TableOutcome> for TableState<RowSelection> {
+impl HandleEvent<Event, MouseOnly, TableOutcome> for TableCoreState<RowSelection> {
     fn handle(&mut self, event: &Event, _keymap: MouseOnly) -> TableOutcome {
-        if !self.has_mouse_focus() {
+        if !self.focus.has_mouse_focus() {
             return TableOutcome::Continue;
         }
 
@@ -348,7 +348,7 @@ impl HandleEvent<Event, MouseOnly, TableOutcome> for TableState<RowSelection> {
 /// Table events are only processed if focus is true.
 /// Mouse events are processed if they are in range.
 pub fn handle_events(
-    state: &mut TableState<RowSelection>,
+    state: &mut TableCoreState<RowSelection>,
     focus: bool,
     event: &Event,
 ) -> TableOutcome {
@@ -357,6 +357,9 @@ pub fn handle_events(
 }
 
 /// Handle only mouse-events.
-pub fn handle_mouse_events(state: &mut TableState<RowSelection>, event: &Event) -> TableOutcome {
+pub fn handle_mouse_events(
+    state: &mut TableCoreState<RowSelection>,
+    event: &Event,
+) -> TableOutcome {
     state.handle(event, MouseOnly)
 }
