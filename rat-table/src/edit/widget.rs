@@ -1,4 +1,5 @@
 use crate::core::TableCore;
+use crate::derive_table_widget;
 use crate::edit::{Mode, TableEditVecState, TableEditor};
 use crate::selection::row::RowSelection;
 use crate::util::clear_buf_area;
@@ -30,9 +31,9 @@ where
             editor,
         }
     }
-}
 
-// attr
+    derive_table_widget!();
+}
 
 impl<'a, T, E> StatefulWidget for TableEditVec<'a, T, E>
 where
@@ -45,12 +46,12 @@ where
         let mut iter = state.data.iter();
         let data = Some((&mut iter) as &mut dyn Iterator<Item = &T>);
 
-        self.core.render(data, area, buf, &mut state.table);
+        self.core.render(data, area, buf, &mut state.core);
 
         if state.mode == Mode::Insert || state.mode == Mode::Edit {
-            if let Some(row) = state.table.selected() {
+            if let Some(row) = state.core.selected() {
                 // but it might be out of view
-                if let Some((row_area, cell_areas)) = state.table.row_cells(row) {
+                if let Some((row_area, cell_areas)) = state.core.row_cells(row) {
                     clear_buf_area(row_area, buf);
                     self.editor
                         .render(row_area, &cell_areas, buf, &mut state.editor);

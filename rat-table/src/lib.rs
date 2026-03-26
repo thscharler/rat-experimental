@@ -1,13 +1,13 @@
 pub mod core;
+pub mod edit;
 pub mod event;
 pub mod render;
 pub mod selection;
 pub mod style;
 pub mod table;
-pub mod edit;
 mod util;
+mod derive;
 pub mod vec;
-
 
 /// Width for the table-layout.
 #[derive(Debug, Default)]
