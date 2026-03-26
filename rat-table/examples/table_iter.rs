@@ -5,12 +5,12 @@
 use crate::mini_salsa::mock_init;
 use crate::mini_salsa::{MiniSalsaState, run_ui, setup_logging};
 use format_num_pattern::NumberFormat;
-use rat_event::{HandleEvent, Regular};
+use rat_event::{HandleEvent, Regular, event_flow};
 use rat_focus::{Focus, FocusBuilder, FocusFlag};
 use rat_scrolled::{Scroll, ScrollStyle};
 use rat_table::event::Outcome;
-use rat_table::selection::RowSelection;
-use rat_table::{Table, TableContext, RenderTableRow, TableState};
+use rat_table::selection::row::RowSelection;
+use rat_table::{RenderContext, RenderTableRow, Table, TableState};
 use rat_theme4::StyleName;
 use rat_theme4::theme::SalsaTheme;
 use ratatui_core::buffer::Buffer;
@@ -77,7 +77,7 @@ fn render(
             v: &Sample,
             area: Rect,
             buf: &mut Buffer,
-            _ctx: &TableContext,
+            _ctx: &RenderContext,
         ) {
             match column {
                 0 => {
@@ -170,9 +170,10 @@ fn event(
     ctx: &mut MiniSalsaState,
     state: &mut State,
 ) -> Result<Outcome, anyhow::Error> {
-    ctx.focus_outcome = focus(state).handle(event, Regular);
+    ctx.focus = Some(focus(state));
+    ctx.handle_focus(event);
 
-    let r = state.table.handle(event, Regular);
+    event_flow!(state.table.handle(event, Regular));
 
-    Ok(r.into())
+    Ok(Outcome::Continue)
 }

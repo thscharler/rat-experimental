@@ -7,12 +7,13 @@ use crate::data::render_tablestate::render_tablestate;
 use crate::mini_salsa::mock_init;
 use crate::mini_salsa::{MiniSalsaState, layout_grid, run_ui, setup_logging};
 use format_num_pattern::NumberFormat;
-use rat_event::ct_event;
 use rat_event::util::item_at;
+use rat_event::{HandleEvent, Regular, ct_event, event_flow};
+use rat_focus::HasFocus;
 use rat_scrolled::{Scroll, ScrollStyle};
 use rat_table::event::Outcome;
-use rat_table::selection::{RowSelection, rowselection};
-use rat_table::{Table, TableContext, RenderTableRow, TableState};
+use rat_table::selection::row::RowSelection;
+use rat_table::{RenderContext, RenderTableRow, Table, TableState};
 use rat_theme4::StyleName;
 use rat_theme4::palette::Colors;
 use rat_theme4::theme::SalsaTheme;
@@ -24,7 +25,6 @@ use ratatui_core::widgets::{StatefulWidget, Widget};
 use ratatui_crossterm::crossterm::event::Event;
 use ratatui_widgets::block::Block;
 use ratatui_widgets::borders::BorderType;
-use std::cmp::max;
 
 const SMALLER: usize = 90;
 const CIRCA: usize = 99;
@@ -150,9 +150,7 @@ fn render(
     goto.render(state.edit[0][9], buf);
 
     // table
-    struct R {
-        report_rows: Option<usize>,
-    }
+    struct R;
 
     impl RenderTableRow<&Sample> for R {
         fn render_cell(
@@ -162,7 +160,7 @@ fn render(
             v: &Sample,
             area: Rect,
             buf: &mut Buffer,
-            _ctx: &TableContext,
+            _ctx: &RenderContext,
         ) {
             match column {
                 0 => {
@@ -215,9 +213,7 @@ fn render(
         .flex(Flex::End)
         .styles(table(&ctx.theme))
         .select_row_style(Some(ctx.theme.p.gray(3)))
-        .render_with(R {
-            report_rows: state.report_rows,
-        })
+        .render_with(R)
         .render(l0[1], buf, &mut state.table);
 
     render_tablestate(&state.table, l1[2], buf);
@@ -255,45 +251,44 @@ fn event(
     _ctx: &mut MiniSalsaState,
     state: &mut State,
 ) -> Result<Outcome, anyhow::Error> {
-    let r0 = 'f: {
-        match event {
-            ct_event!(mouse down Left for x,y) => match item_at(&state.edit[0], *x, *y) {
-                Some(1) => {
-                    state.report_rows = None;
-                    break 'f Outcome::Changed;
-                }
-                Some(2) => {
-                    state.report_rows = Some(SMALLER);
-                    break 'f Outcome::Changed;
-                }
-                Some(3) => {
-                    state.report_rows = Some(CIRCA);
-                    break 'f Outcome::Changed;
-                }
-                Some(4) => {
-                    state.report_rows = Some(EXACT);
-                    break 'f Outcome::Changed;
-                }
-                Some(5) => {
-                    state.report_rows = Some(GREATER);
-                    break 'f Outcome::Changed;
-                }
-                Some(7) => {
-                    state.no_row_count = !state.no_row_count;
-                    break 'f Outcome::Changed;
-                }
-                Some(9) => {
-                    state.table.vscroll.offset = 1_000_000; // 1_000_000;
-                    break 'f Outcome::Changed;
-                }
-                _ => {
-                    break 'f Outcome::Continue;
-                }
-            },
-            _ => Outcome::Continue,
-        }
-    };
+    match event {
+        ct_event!(mouse down Left for x,y) => match item_at(&state.edit[0], *x, *y) {
+            Some(1) => event_flow!({
+                state.report_rows = None;
+                Outcome::Changed
+            }),
+            Some(2) => event_flow!({
+                state.report_rows = Some(SMALLER);
+                Outcome::Changed
+            }),
+            Some(3) => event_flow!({
+                state.report_rows = Some(CIRCA);
+                Outcome::Changed
+            }),
+            Some(4) => event_flow!({
+                state.report_rows = Some(EXACT);
+                Outcome::Changed
+            }),
+            Some(5) => event_flow!({
+                state.report_rows = Some(GREATER);
+                Outcome::Changed
+            }),
+            Some(7) => event_flow!({
+                state.no_row_count = !state.no_row_count;
+                Outcome::Changed
+            }),
+            Some(9) => event_flow!({
+                state.table.core.vscroll.offset = 1_000_000; // 1_000_000;
+                Outcome::Changed
+            }),
+            _ => {}
+        },
+        _ => {}
+    }
 
-    let r1 = rowselection::handle_events(&mut state.table, true, event);
-    Ok(max(r0, r1.into()))
+    // override focus
+    state.table.focus().set(true);
+    event_flow!(state.table.handle(event, Regular));
+
+    Ok(Outcome::Continue)
 }

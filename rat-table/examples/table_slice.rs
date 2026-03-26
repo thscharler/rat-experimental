@@ -9,8 +9,8 @@ use rat_event::{HandleEvent, Regular};
 use rat_focus::{Focus, FocusBuilder, FocusFlag};
 use rat_scrolled::{Scroll, ScrollStyle};
 use rat_table::event::Outcome;
-use rat_table::selection::RowSelection;
-use rat_table::{Table, TableContext, RenderTableRow, TableState};
+use rat_table::selection::row::RowSelection;
+use rat_table::{RenderContext, RenderTableRow, Table, TableState};
 use rat_theme4::StyleName;
 use rat_theme4::theme::SalsaTheme;
 use ratatui_core::buffer::Buffer;
@@ -76,7 +76,7 @@ fn render(
             v: &Sample,
             area: Rect,
             buf: &mut Buffer,
-            _ctx: &TableContext,
+            _ctx: &RenderContext,
         ) {
             match column {
                 0 => {

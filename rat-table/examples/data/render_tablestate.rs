@@ -2,11 +2,11 @@
 
 use crate::mini_salsa::layout_grid;
 use rat_table::TableState;
-use rat_table::selection::RowSelection;
 use ratatui_core::buffer::Buffer;
 use ratatui_core::layout::{Constraint, Layout, Rect};
 use ratatui_core::widgets::Widget;
 use std::fmt::Debug;
+use rat_table::selection::row::RowSelection;
 
 pub fn render_tablestate<Selection: Debug>(
     state: &TableState<Selection>,
@@ -33,52 +33,52 @@ pub fn render_tablestate<Selection: Debug>(
     );
 
     "rows".render(l_grid[0][1], buf);
-    format!("{}", state.rows)
+    format!("{}", state.core.rows)
         .to_string()
         .render(l_grid[1][1], buf);
 
     "row_offset".render(l_grid[0][2], buf);
-    format!("{}", state.vscroll.offset())
+    format!("{}", state.core.vscroll.offset())
         .to_string()
         .render(l_grid[1][2], buf);
 
     "max_row_offset".render(l_grid[0][3], buf);
-    format!("{}", state.vscroll.max_offset())
+    format!("{}", state.core.vscroll.max_offset())
         .to_string()
         .render(l_grid[1][3], buf);
 
     "row_page_len".render(l_grid[0][4], buf);
-    format!("{}", state.vscroll.page_len())
+    format!("{}", state.core.vscroll.page_len())
         .to_string()
         .render(l_grid[1][4], buf);
 
     "row_scroll".render(l_grid[0][5], buf);
-    format!("{}", state.vscroll.scroll_by())
+    format!("{}", state.core.vscroll.scroll_by())
         .to_string()
         .render(l_grid[1][5], buf);
 
     "columns".render(l_grid[0][6], buf);
-    format!("{}", state.columns)
+    format!("{}", state.core.columns)
         .to_string()
         .render(l_grid[1][6], buf);
 
     "col_offset".render(l_grid[0][7], buf);
-    format!("{}", state.hscroll.offset())
+    format!("{}", state.core.hscroll.offset())
         .to_string()
         .render(l_grid[1][7], buf);
 
     "max_col_offset".render(l_grid[0][8], buf);
-    format!("{}", state.hscroll.max_offset())
+    format!("{}", state.core.hscroll.max_offset())
         .to_string()
         .render(l_grid[1][8], buf);
 
     "col_page_len".render(l_grid[0][9], buf);
-    format!("{}", state.hscroll.page_len())
+    format!("{}", state.core.hscroll.page_len())
         .to_string()
         .render(l_grid[1][9], buf);
 
     "col_scrollby".render(l_grid[0][10], buf);
-    format!("{}", state.hscroll.scroll_by())
+    format!("{}", state.core.hscroll.scroll_by())
         .to_string()
         .render(l_grid[1][10], buf);
 }
@@ -104,57 +104,57 @@ pub fn render_tablestate_row(state: &TableState<RowSelection>, area: Rect, buf: 
     );
 
     "rows".render(l_grid[0][1], buf);
-    format!("{}", state.rows)
+    format!("{}", state.core.rows)
         .to_string()
         .render(l_grid[1][1], buf);
 
     "row_offset".render(l_grid[0][2], buf);
-    format!("{}", state.vscroll.offset())
+    format!("{}", state.core.vscroll.offset())
         .to_string()
         .render(l_grid[1][2], buf);
 
     "max_row_offset".render(l_grid[0][3], buf);
-    format!("{}", state.vscroll.max_offset())
+    format!("{}", state.core.vscroll.max_offset())
         .to_string()
         .render(l_grid[1][3], buf);
 
     "row_page_len".render(l_grid[0][4], buf);
-    format!("{}", state.vscroll.page_len())
+    format!("{}", state.core.vscroll.page_len())
         .to_string()
         .render(l_grid[1][4], buf);
 
     "row_scroll".render(l_grid[0][5], buf);
-    format!("{}", state.vscroll.scroll_by())
+    format!("{}", state.core.vscroll.scroll_by())
         .to_string()
         .render(l_grid[1][5], buf);
 
     "columns".render(l_grid[0][6], buf);
-    format!("{}", state.columns)
+    format!("{}", state.core.columns)
         .to_string()
         .render(l_grid[1][6], buf);
 
     "col_offset".render(l_grid[0][7], buf);
-    format!("{}", state.hscroll.offset())
+    format!("{}", state.core.hscroll.offset())
         .to_string()
         .render(l_grid[1][7], buf);
 
     "max_col_offset".render(l_grid[0][8], buf);
-    format!("{}", state.hscroll.max_offset())
+    format!("{}", state.core.hscroll.max_offset())
         .to_string()
         .render(l_grid[1][8], buf);
 
     "col_page_len".render(l_grid[0][9], buf);
-    format!("{}", state.hscroll.page_len())
+    format!("{}", state.core.hscroll.page_len())
         .to_string()
         .render(l_grid[1][9], buf);
 
     "col_scrollby".render(l_grid[0][10], buf);
-    format!("{}", state.hscroll.scroll_by())
+    format!("{}", state.core.hscroll.scroll_by())
         .to_string()
         .render(l_grid[1][10], buf);
 
     "selection".render(l_grid[0][11], buf);
-    format!("{:?}", state.selection.lead_row)
+    format!("{:?}", state.core.selection.lead_row)
         .to_string()
         .render(l_grid[1][11], buf);
 }
