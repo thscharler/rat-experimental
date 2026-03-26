@@ -1,5 +1,5 @@
-mod table;
+mod widget;
 mod state;
 
-pub use table::*;
+pub use widget::*;
 pub use state::*;

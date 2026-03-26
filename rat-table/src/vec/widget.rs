@@ -3,7 +3,8 @@ use crate::core::TableCore;
 use crate::render::RenderTableRow;
 use crate::selection::TableSelection;
 use crate::selection::row::RowSelection;
-use crate::table_vec_state::TableVecState;
+use crate::style::TableStyle;
+use crate::vec::TableVecState;
 use rat_scrolled::Scroll;
 use ratatui_core::buffer::Buffer;
 use ratatui_core::layout::{Constraint, Flex, Rect};
@@ -12,7 +13,6 @@ use ratatui_core::text::Text;
 use ratatui_core::widgets::StatefulWidget;
 use ratatui_widgets::block::Block;
 use std::borrow::Cow;
-use crate::style::TableStyle;
 
 /// Table using internal storage to hold a Vec of
 /// items that are the table-items.

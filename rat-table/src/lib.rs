@@ -3,18 +3,13 @@ pub mod event;
 pub mod render;
 pub mod selection;
 pub mod style;
-mod table;
+pub mod table;
 mod table_edit;
 mod table_state;
-mod table_vec;
-mod table_vec_state;
 mod util;
+pub mod vec;
 
-pub use table::*;
 pub use table_edit::*;
-pub use table_state::*;
-pub use table_vec::*;
-pub use table_vec_state::*;
 
 /// Width for the table-layout.
 #[derive(Debug, Default)]

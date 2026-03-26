@@ -1,9 +1,10 @@
+use crate::TableWidth;
 use crate::core::TableCore;
 use crate::render::RenderTableRow;
 use crate::selection::TableSelection;
 use crate::selection::row::RowSelection;
 use crate::style::TableStyle;
-use crate::{TableState, TableWidth};
+use crate::table::TableState;
 use rat_scrolled::Scroll;
 use ratatui_core::buffer::Buffer;
 use ratatui_core::layout::{Constraint, Flex, Rect};

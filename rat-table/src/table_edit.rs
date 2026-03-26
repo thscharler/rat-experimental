@@ -71,13 +71,13 @@ where
     editor: E,
 }
 
-pub struct TableEditState<T, ES>
+pub struct TableEditState<T, S>
 where
-    ES: TableEditorState<T>,
+    S: TableEditorState<T>,
 {
     pub core: TableCoreState<RowSelection>,
     pub mode: Mode,
-    pub editor: ES,
+    pub editor: S,
     pub data: Vec<T>,
 
     pub mouse: MouseFlags,
@@ -123,9 +123,9 @@ where
     }
 }
 
-impl<T, ES> Default for TableEditState<T, ES>
+impl<T, S> Default for TableEditState<T, S>
 where
-    ES: TableEditorState<T> + Default,
+    S: TableEditorState<T> + Default,
 {
     fn default() -> Self {
         Self {
@@ -139,9 +139,9 @@ where
     }
 }
 
-impl<T, ES> HasFocus for TableEditState<T, ES>
+impl<T, S> HasFocus for TableEditState<T, S>
 where
-    ES: TableEditorState<T>,
+    S: TableEditorState<T>,
 {
     fn build(&self, builder: &mut FocusBuilder) {
         builder.leaf_widget(self);
@@ -163,9 +163,9 @@ where
     }
 }
 
-impl<T, ES> HasScreenCursor for TableEditState<T, ES>
+impl<T, S> HasScreenCursor for TableEditState<T, S>
 where
-    ES: TableEditorState<T> + HasScreenCursor,
+    S: TableEditorState<T> + HasScreenCursor,
 {
     fn screen_cursor(&self) -> Option<(u16, u16)> {
         match self.mode {
@@ -175,9 +175,9 @@ where
     }
 }
 
-impl<T, ES> RelocatableState for TableEditState<T, ES>
+impl<T, S> RelocatableState for TableEditState<T, S>
 where
-    ES: TableEditorState<T> + RelocatableState,
+    S: TableEditorState<T> + RelocatableState,
 {
     fn relocate(&mut self, shift: (i16, i16), clip: Rect) {
         match self.mode {
@@ -189,11 +189,11 @@ where
     }
 }
 
-impl<T, ES> TableEditState<T, ES>
+impl<T, S> TableEditState<T, S>
 where
-    ES: TableEditorState<T>,
+    S: TableEditorState<T>,
 {
-    pub fn new(editor: ES) -> Self {
+    pub fn new(editor: S) -> Self {
         Self {
             mode: Mode::View,
             core: Default::default(),
@@ -204,7 +204,7 @@ where
         }
     }
 
-    pub fn named(name: &str, editor: ES) -> Self {
+    pub fn named(name: &str, editor: S) -> Self {
         Self {
             mode: Mode::View,
             core: TableCoreState::named(name),
@@ -216,9 +216,9 @@ where
     }
 }
 
-impl<T, ES> TableEditState<T, ES>
+impl<T, S> TableEditState<T, S>
 where
-    ES: TableEditorState<T>,
+    S: TableEditorState<T>,
     T: Clone,
 {
     /// Clear the widget.
@@ -283,7 +283,7 @@ where
     }
 
     /// Edit a new item inserted at the selected row.
-    pub fn edit_new<'a>(&mut self, row: usize, ctx: &'a ES::Context<'a>) -> Result<(), ES::Err> {
+    pub fn edit_new<'a>(&mut self, row: usize, ctx: &'a S::Context<'a>) -> Result<(), S::Err> {
         if self.mode != Mode::View {
             return Ok(());
         }
@@ -300,8 +300,8 @@ where
         &mut self,
         col: usize,
         row: usize,
-        ctx: &'a ES::Context<'a>,
-    ) -> Result<(), ES::Err> {
+        ctx: &'a S::Context<'a>,
+    ) -> Result<(), S::Err> {
         if self.mode != Mode::View {
             return Ok(());
         }
@@ -343,7 +343,7 @@ where
     }
 
     /// Commit the changes in the editor.
-    pub fn commit<'a>(&mut self, ctx: &'a ES::Context<'a>) -> Result<(), ES::Err> {
+    pub fn commit<'a>(&mut self, ctx: &'a S::Context<'a>) -> Result<(), S::Err> {
         if self.mode == Mode::View {
             return Ok(());
         }
@@ -363,7 +363,7 @@ where
         Ok(())
     }
 
-    pub fn commit_and_append<'a>(&mut self, ctx: &'a ES::Context<'a>) -> Result<(), ES::Err> {
+    pub fn commit_and_append<'a>(&mut self, ctx: &'a S::Context<'a>) -> Result<(), S::Err> {
         self.commit(ctx)?;
         if let Some(row) = self.core.selected() {
             self.edit_new(row + 1, ctx)?;
@@ -371,7 +371,7 @@ where
         Ok(())
     }
 
-    pub fn commit_and_edit<'a>(&mut self, ctx: &'a ES::Context<'a>) -> Result<(), ES::Err> {
+    pub fn commit_and_edit<'a>(&mut self, ctx: &'a S::Context<'a>) -> Result<(), S::Err> {
         let Some(row) = self.core.selected() else {
             return Ok(());
         };
@@ -390,15 +390,15 @@ where
     }
 }
 
-impl<'a, T, ES> HandleEvent<Event, &'a ES::Context<'a>, Result<Outcome, ES::Err>>
-    for TableEditState<T, ES>
+impl<'a, T, S> HandleEvent<Event, &'a S::Context<'a>, Result<Outcome, S::Err>>
+    for TableEditState<T, S>
 where
-    ES: HandleEvent<Event, &'a ES::Context<'a>, Result<Outcome, ES::Err>>,
-    ES: TableEditorState<T>,
+    S: HandleEvent<Event, &'a S::Context<'a>, Result<Outcome, S::Err>>,
+    S: TableEditorState<T>,
     T: Clone,
 {
     #[allow(clippy::collapsible_if)]
-    fn handle(&mut self, event: &Event, ctx: &'a ES::Context<'a>) -> Result<Outcome, ES::Err> {
+    fn handle(&mut self, event: &Event, ctx: &'a S::Context<'a>) -> Result<Outcome, S::Err> {
         if self.mode == Mode::Edit || self.mode == Mode::Insert {
             if self.is_focused() {
                 event_flow!({
