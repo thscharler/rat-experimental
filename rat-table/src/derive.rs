@@ -45,7 +45,7 @@ macro_rules! derive_table_widget {
         /// Column widths as Constraints.
         ///
         /// The table-width that is used for these constraints
-        /// is influenced by [layout_width].
+        /// is influenced by [layout_width][Self::layout_width].
         #[inline]
         pub fn widths<I>(mut self, widths: I) -> Self
         where
@@ -308,7 +308,7 @@ macro_rules! derive_table_widget_state {
         }
 
         /// Cell when dragging. Position can be outside the table area.
-        /// See [row_at_drag](TableState::row_at_drag), [col_at_drag](TableState::column_at_drag)
+        /// See [row_at_drag](Self::row_at_drag), [col_at_drag](Self::column_at_drag)
         #[inline]
         pub fn cell_at_drag(&self, pos: (u16, u16)) -> (usize, usize) {
             self.core.cell_at_drag(pos)
@@ -582,7 +582,7 @@ macro_rules! derive_table_widget_state {
         /// Add to selection. Only works for retired selections, not for the
         /// active anchor-lead range.
         ///
-        /// To be sure call [retire_selection] first.
+        /// To be sure call [retire_selection][Self::retire_selection] first.
         #[inline]
         pub fn add_selected(&mut self, idx: usize) {
             self.core.add_selected(idx)
@@ -591,7 +591,7 @@ macro_rules! derive_table_widget_state {
         /// Remove from selection. Only works for retired selections, not for the
         /// active anchor-lead range.
         ///
-        /// To be sure call [retire_selection] first.
+        /// To be sure call [retire_selection][Self::retire_selection] first.
         #[inline]
         pub fn remove_selected(&mut self, idx: usize) {
             self.core.remove_selected(idx)

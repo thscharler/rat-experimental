@@ -1,3 +1,5 @@
+#![doc = include_str!("../readme.md")]
+
 pub mod core;
 mod derive;
 mod edit;

@@ -14,7 +14,7 @@ use rat_reloc::RelocatableState;
 use ratatui_core::layout::Rect;
 use std::collections::HashSet;
 
-/// State for [TableVec].
+/// State for [TableVec][crate::TableVec].
 pub struct TableVecState<T, Selection = RowSelection> {
     pub core: TableCoreState<Selection>,
     pub data: Vec<T>,
