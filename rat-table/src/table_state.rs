@@ -275,6 +275,12 @@ impl<Selection> TableState<Selection> {
 
 // Offset related.
 impl<Selection: TableSelection> TableState<Selection> {
+    /// Clear the selection.
+    #[inline]
+    pub fn clear_selection(&mut self) {
+        self.selection.clear();
+    }
+
     /// Update the state to match adding items.
     /// This corrects the number of rows, offset and selection.
     pub fn items_added(&mut self, pos: usize, n: usize) {
@@ -472,12 +478,6 @@ impl TableState<RowSelection> {
         self.selection.set_scroll_selected(scroll);
     }
 
-    /// Clear the selection.
-    #[inline]
-    pub fn clear_selection(&mut self) {
-        self.selection.clear();
-    }
-
     /// Anything selected?
     #[inline]
     pub fn has_selection(&mut self) -> bool {
@@ -562,12 +562,6 @@ impl TableState<RowSelection> {
 }
 
 impl TableState<RowSetSelection> {
-    /// Clear the selection.
-    #[inline]
-    pub fn clear_selection(&mut self) {
-        self.selection.clear();
-    }
-
     /// Anything selected?
     #[inline]
     pub fn has_selection(&mut self) -> bool {
@@ -663,11 +657,6 @@ impl TableState<RowSetSelection> {
 }
 
 impl TableState<CellSelection> {
-    #[inline]
-    pub fn clear_selection(&mut self) {
-        self.selection.clear();
-    }
-
     #[inline]
     pub fn has_selection(&mut self) -> bool {
         self.selection.has_selection()

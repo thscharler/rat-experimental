@@ -15,9 +15,7 @@ use std::cmp::max;
 pub struct NoSelection;
 
 impl TableSelection for NoSelection {
-    fn count(&self) -> usize {
-        0
-    }
+    fn clear(&mut self) {}
 
     fn is_selected_row(&self, _row: usize) -> bool {
         false

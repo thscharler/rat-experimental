@@ -1,12 +1,12 @@
 use crate::TableSelection;
 use crate::event::TableOutcome;
+use crate::table_state::TableState;
 use rat_event::{ConsumedEvent, HandleEvent, MouseOnly, Regular, ct_event};
 use rat_focus::HasFocus;
 use rat_scrolled::ScrollAreaState;
 use rat_scrolled::event::ScrollOutcome;
 use ratatui_crossterm::crossterm::event::Event;
 use std::cmp::{max, min};
-use crate::table_state::TableState;
 
 /// Select a single cell in the table.
 ///
@@ -18,8 +18,10 @@ pub struct CellSelection {
 }
 
 impl TableSelection for CellSelection {
-    fn count(&self) -> usize {
-        if self.lead_cell.is_some() { 1 } else { 0 }
+    /// Clear the selection.
+    #[inline]
+    fn clear(&mut self) {
+        self.lead_cell = None;
     }
 
     fn is_selected_row(&self, row: usize) -> bool {
@@ -83,12 +85,6 @@ impl CellSelection {
     /// New
     pub fn new() -> CellSelection {
         Self::default()
-    }
-
-    /// Clear the selection.
-    #[inline]
-    pub fn clear(&mut self) {
-        self.lead_cell = None;
     }
 
     /// Selected cell.

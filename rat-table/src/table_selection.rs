@@ -1,9 +1,9 @@
 
 /// Trait for the different selection models used by Table.
 pub trait TableSelection {
-    /// Number of rows selected.
-    fn count(&self) -> usize;
-
+    /// Clear the selection.
+    fn clear(&mut self);
+    
     /// Row is selected. This can be separate from `is_selected_cell`.
     fn is_selected_row(&self, row: usize) -> bool;
 

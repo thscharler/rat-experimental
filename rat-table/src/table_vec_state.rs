@@ -259,13 +259,26 @@ impl<T, Selection: TableSelection> TableVecState<T, Selection> {
 }
 
 impl<T, Selection: TableSelection> TableVecState<T, Selection> {
+    /// Clear
+    pub fn clear(&mut self) {
+        self.data.clear();
+        self.table.clear_offset();
+        self.table.clear_selection();
+    }
+
+    /// Clear the selection.
+    #[inline]
+    pub fn clear_selection(&mut self) {
+        self.table.clear_selection()
+    }
+
     /// Data-vec changed.
     pub fn rows_changed(&mut self) {
         self.table.rows_changed(self.data.len());
     }
 
     /// Set the data-vec.
-    pub fn set_data(&mut self, data: Vec<T>) {
+    pub fn set_value(&mut self, data: Vec<T>) {
         self.data = data;
         self.table.rows_changed(self.data.len());
     }
@@ -335,12 +348,6 @@ impl<T> TableVecState<T, RowSelection> {
 }
 
 impl<T> TableVecState<T, RowSetSelection> {
-    /// Clear the selection.
-    #[inline]
-    pub fn clear_selection(&mut self) {
-        self.table.clear_selection()
-    }
-
     /// Anything selected?
     #[inline]
     pub fn has_selection(&mut self) -> bool {
@@ -424,11 +431,6 @@ impl<T> TableVecState<T, RowSetSelection> {
 }
 
 impl<T> TableVecState<T, CellSelection> {
-    #[inline]
-    pub fn clear_selection(&mut self) {
-        self.table.clear_selection();
-    }
-
     #[inline]
     pub fn has_selection(&mut self) -> bool {
         self.table.has_selection()

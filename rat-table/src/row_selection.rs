@@ -23,8 +23,9 @@ pub struct RowSelection {
 }
 
 impl TableSelection for RowSelection {
-    fn count(&self) -> usize {
-        if self.lead_row.is_some() { 1 } else { 0 }
+    /// Clear the selection.
+    fn clear(&mut self) {
+        self.lead_row = None;
     }
 
     fn is_selected_row(&self, row: usize) -> bool {
@@ -83,11 +84,6 @@ impl RowSelection {
     /// New selection.
     pub fn new() -> RowSelection {
         Self::default()
-    }
-
-    /// Clear the selection.
-    pub fn clear(&mut self) {
-        self.lead_row = None;
     }
 
     /// Scroll selection instead of offset.

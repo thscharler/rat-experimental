@@ -25,7 +25,7 @@ impl<'a, T, Selection> Default for TableVec<'a, T, Selection> {
     }
 }
 
-impl<'a, T: 'a, Selection> TableVec<'a, T, Selection> {
+impl<'a, T, Selection> TableVec<'a, T, Selection> {
     pub fn new() -> Self
     where
         Selection: Default,
@@ -270,7 +270,6 @@ impl<'a, T: 'a, Selection> TableVec<'a, T, Selection> {
 
 impl<'a, T, Selection> StatefulWidget for TableVec<'a, T, Selection>
 where
-    T: Copy + 'a,
     Selection: TableSelection + Default,
 {
     type State = TableVecState<T, Selection>;

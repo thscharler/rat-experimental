@@ -1,5 +1,6 @@
 use crate::TableSelection;
 use crate::event::TableOutcome;
+use crate::table_state::TableState;
 use rat_event::{HandleEvent, MouseOnly, Regular, ct_event, flow};
 use rat_focus::HasFocus;
 use rat_scrolled::ScrollAreaState;
@@ -8,7 +9,6 @@ use ratatui_crossterm::crossterm::event::{Event, KeyModifiers};
 use std::cmp::{max, min};
 use std::collections::HashSet;
 use std::mem;
-use crate::table_state::TableState;
 
 /// Allows selection an active range of rows.
 ///
@@ -33,18 +33,11 @@ pub struct RowSetSelection {
 }
 
 impl TableSelection for RowSetSelection {
-    fn count(&self) -> usize {
-        let n = if let Some(anchor) = self.anchor_row {
-            if let Some(lead) = self.lead_row {
-                lead.abs_diff(anchor) + 1
-            } else {
-                0
-            }
-        } else {
-            0
-        };
-
-        n + self.selected.len()
+    /// Clear the selection.
+    fn clear(&mut self) {
+        self.anchor_row = None;
+        self.lead_row = None;
+        self.selected.clear();
     }
 
     #[allow(clippy::collapsible_else_if)]
@@ -159,13 +152,6 @@ impl RowSetSelection {
             lead_row: None,
             selected: HashSet::new(),
         }
-    }
-
-    /// Clear the selection.
-    pub fn clear(&mut self) {
-        self.anchor_row = None;
-        self.lead_row = None;
-        self.selected.clear();
     }
 
     /// Current lead.
