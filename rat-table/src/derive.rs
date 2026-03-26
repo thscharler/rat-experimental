@@ -1,3 +1,6 @@
+/// Implements forward calls to core for a Table widget.
+///
+/// __Only useful if you want to implement a new Table widget__
 #[macro_export]
 macro_rules! derive_table_widget {
     () => {
@@ -263,6 +266,11 @@ macro_rules! derive_table_widget {
     };
 }
 
+/// Implements forward calls to core for a Table widget state struct.
+/// The functions come in groups. See [TableState][crate::TableState]
+/// for usage.
+///
+/// __Only useful if you want to implement a new Table widget__
 #[macro_export]
 macro_rules! derive_table_widget_state {
     (BASE) => {
