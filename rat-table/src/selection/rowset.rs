@@ -531,23 +531,3 @@ impl HandleEvent<Event, MouseOnly, TableOutcome> for TableCoreState<RowSetSelect
         }
     }
 }
-
-/// Handle all events.
-/// Table events are only processed if focus is true.
-/// Mouse events are processed if they are in range.
-pub fn handle_events(
-    state: &mut TableCoreState<RowSetSelection>,
-    focus: bool,
-    event: &Event,
-) -> TableOutcome {
-    state.focus.set(focus);
-    state.handle(event, Regular)
-}
-
-/// Handle only mouse-events.
-pub fn handle_mouse_events(
-    state: &mut TableCoreState<RowSetSelection>,
-    event: &Event,
-) -> TableOutcome {
-    state.handle(event, MouseOnly)
-}

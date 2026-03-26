@@ -18,7 +18,10 @@ macro_rules! derive_table_widget {
 
         /// How to render a table-row.
         #[inline]
-        pub fn render_with(mut self, render: impl for<'b> $crate::render::RenderTableRow<&'b T> + 'a) -> Self {
+        pub fn render_with(
+            mut self,
+            render: impl for<'b> $crate::render::RenderTableRow<&'b T> + 'a,
+        ) -> Self {
             self.core = self.core.render_with(render);
             self
         }
@@ -156,7 +159,10 @@ macro_rules! derive_table_widget {
         /// Style for a selected row. The chosen selection must support
         /// row-selection for this to take effect.
         #[inline]
-        pub fn select_row_style(mut self, select_style: Option<ratatui_core::style::Style>) -> Self {
+        pub fn select_row_style(
+            mut self,
+            select_style: Option<ratatui_core::style::Style>,
+        ) -> Self {
             self.core = self.core.select_row_style(select_style);
             self
         }
@@ -171,7 +177,10 @@ macro_rules! derive_table_widget {
         /// Style for a selected column. The chosen selection must support
         /// column-selection for this to take effect.
         #[inline]
-        pub fn select_column_style(mut self, select_style: Option<ratatui_core::style::Style>) -> Self {
+        pub fn select_column_style(
+            mut self,
+            select_style: Option<ratatui_core::style::Style>,
+        ) -> Self {
             self.core = self.core.select_column_style(select_style);
             self
         }
@@ -186,7 +195,10 @@ macro_rules! derive_table_widget {
         /// Style for a selected cell. The chosen selection must support
         /// cell-selection for this to take effect.
         #[inline]
-        pub fn select_cell_style(mut self, select_style: Option<ratatui_core::style::Style>) -> Self {
+        pub fn select_cell_style(
+            mut self,
+            select_style: Option<ratatui_core::style::Style>,
+        ) -> Self {
             self.core = self.core.select_cell_style(select_style);
             self
         }
@@ -201,7 +213,10 @@ macro_rules! derive_table_widget {
         /// Style for a selected header cell. The chosen selection must
         /// support column-selection for this to take effect.
         #[inline]
-        pub fn select_header_style(mut self, select_style: Option<ratatui_core::style::Style>) -> Self {
+        pub fn select_header_style(
+            mut self,
+            select_style: Option<ratatui_core::style::Style>,
+        ) -> Self {
             self.core = self.core.select_header_style(select_style);
             self
         }
@@ -216,7 +231,10 @@ macro_rules! derive_table_widget {
         /// Style for a selected footer cell. The chosen selection must
         /// support column-selection for this to take effect.
         #[inline]
-        pub fn select_footer_style(mut self, select_style: Option<ratatui_core::style::Style>) -> Self {
+        pub fn select_footer_style(
+            mut self,
+            select_style: Option<ratatui_core::style::Style>,
+        ) -> Self {
             self.core = self.core.select_footer_style(select_style);
             self
         }

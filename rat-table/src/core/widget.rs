@@ -659,6 +659,10 @@ pub fn render_table<'a, T, Selection: TableSelection>(
                         break;
                     }
 
+                    ctx.selected_cell = false;
+                    ctx.selected_column = false;
+                    ctx.select_style = None;
+
                     let render_cell_area = Rect::new(
                         l_columns[col].x,
                         0,

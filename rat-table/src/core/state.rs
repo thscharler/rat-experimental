@@ -1,12 +1,13 @@
 use crate::_private::NonExhaustive;
-use crate::event::DoubleClickOutcome;
+use crate::event::{DoubleClickOutcome, TableOutcome};
 use crate::selection::TableSelection;
 use crate::selection::cell::CellSelection;
+use crate::selection::none::NoSelection;
 use crate::selection::row::RowSelection;
 use crate::selection::rowset::RowSetSelection;
 use rat_event::crossterm::event::Event;
 use rat_event::util::MouseFlags;
-use rat_event::{DoubleClick, HandleEvent, ct_event};
+use rat_event::{DoubleClick, HandleEvent, MouseOnly, Regular, ct_event};
 use rat_focus::{FocusFlag, HasFocus};
 use rat_reloc::{RelocatableState, relocate_areas};
 use rat_scrolled::ScrollState;
@@ -757,10 +758,69 @@ impl<Selection> HandleEvent<Event, DoubleClick, DoubleClickOutcome> for TableCor
     }
 }
 
-/// Handle all events for recognizing double-clicks.
-pub fn handle_doubleclick_events<Selection: TableSelection>(
-    state: &mut TableCoreState<Selection>,
-    event: &Event,
-) -> DoubleClickOutcome {
-    state.handle(event, DoubleClick)
+impl<Selection> TableCoreState<Selection> {
+    /// Handle all events for recognizing double-clicks.
+    pub fn handle_doubleclick_events(&mut self, event: &Event) -> DoubleClickOutcome {
+        self.handle(event, DoubleClick)
+    }
+}
+
+impl TableCoreState<RowSelection> {
+    /// Handle all events.
+    /// Table events are only processed if focus is true.
+    /// Mouse events are processed if they are in range.
+    pub fn handle_events(&mut self, focus: bool, event: &Event) -> TableOutcome {
+        self.focus.set(focus);
+        self.handle(event, Regular)
+    }
+
+    /// Handle only mouse-events.
+    pub fn handle_mouse_events(&mut self, event: &Event) -> TableOutcome {
+        self.handle(event, MouseOnly)
+    }
+}
+
+impl TableCoreState<CellSelection> {
+    /// Handle all events.
+    /// Table events are only processed if focus is true.
+    /// Mouse events are processed if they are in range.
+    pub fn handle_events(&mut self, focus: bool, event: &Event) -> TableOutcome {
+        self.focus.set(focus);
+        self.handle(event, Regular)
+    }
+
+    /// Handle only mouse-events.
+    pub fn handle_mouse_events(&mut self, event: &Event) -> TableOutcome {
+        self.handle(event, MouseOnly)
+    }
+}
+
+impl TableCoreState<NoSelection> {
+    /// Handle all events.
+    /// Table events are only processed if focus is true.
+    /// Mouse events are processed if they are in range.
+    pub fn handle_events(&mut self, focus: bool, event: &Event) -> TableOutcome {
+        self.focus.set(focus);
+        self.handle(event, Regular)
+    }
+
+    /// Handle only mouse-events.
+    pub fn handle_mouse_events(&mut self, event: &Event) -> TableOutcome {
+        self.handle(event, MouseOnly)
+    }
+}
+
+impl TableCoreState<RowSetSelection> {
+    /// Handle all events.
+    /// Table events are only processed if focus is true.
+    /// Mouse events are processed if they are in range.
+    pub fn handle_events(&mut self, focus: bool, event: &Event) -> TableOutcome {
+        self.focus.set(focus);
+        self.handle(event, Regular)
+    }
+
+    /// Handle only mouse-events.
+    pub fn handle_mouse_events(&mut self, event: &Event) -> TableOutcome {
+        self.handle(event, MouseOnly)
+    }
 }

@@ -213,20 +213,3 @@ impl HandleEvent<Event, MouseOnly, TableOutcome> for TableCoreState<NoSelection>
         r
     }
 }
-
-/// Handle all events.
-/// Table events are only processed if focus is true.
-/// Mouse events are processed if they are in range.
-pub fn handle_events(
-    state: &mut TableCoreState<NoSelection>,
-    focus: bool,
-    event: &Event,
-) -> TableOutcome {
-    state.focus.set(focus);
-    state.handle(event, Regular)
-}
-
-/// Handle only mouse-events.
-pub fn handle_mouse_events(state: &mut TableCoreState<NoSelection>, event: &Event) -> TableOutcome {
-    state.handle(event, MouseOnly)
-}

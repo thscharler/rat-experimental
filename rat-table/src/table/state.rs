@@ -1,14 +1,15 @@
 use crate::_private::NonExhaustive;
 use crate::core::TableCoreState;
 use crate::derive_table_widget_state;
-use crate::event::DoubleClickOutcome;
+use crate::event::{DoubleClickOutcome, TableOutcome};
 use crate::selection::TableSelection;
 use crate::selection::cell::CellSelection;
+use crate::selection::none::NoSelection;
 use crate::selection::row::RowSelection;
 use crate::selection::rowset::RowSetSelection;
 use rat_cursor::HasScreenCursor;
 use rat_event::crossterm::event::Event;
-use rat_event::{DoubleClick, HandleEvent};
+use rat_event::{DoubleClick, HandleEvent, MouseOnly, Regular};
 use rat_focus::{FocusBuilder, FocusFlag, HasFocus};
 use rat_reloc::RelocatableState;
 use ratatui_core::layout::Rect;
@@ -115,17 +116,57 @@ impl TableState<CellSelection> {
     derive_table_widget_state!(CELLSELECTION);
 }
 
-impl<Selection> HandleEvent<Event, DoubleClick, DoubleClickOutcome> for TableState<Selection> {
-    /// Handles double-click events on the table.
-    fn handle(&mut self, event: &Event, _keymap: DoubleClick) -> DoubleClickOutcome {
-        self.core.handle(event, DoubleClick)
+impl HandleEvent<Event, Regular, TableOutcome> for TableState<CellSelection> {
+    fn handle(&mut self, event: &Event, _: Regular) -> TableOutcome {
+        self.core.handle(event, Regular)
     }
 }
 
-/// Handle all events for recognizing double-clicks.
-pub fn handle_doubleclick_events<Selection: TableSelection>(
-    state: &mut TableState<Selection>,
-    event: &Event,
-) -> DoubleClickOutcome {
-    state.handle(event, DoubleClick)
+impl HandleEvent<Event, MouseOnly, TableOutcome> for TableState<CellSelection> {
+    fn handle(&mut self, event: &Event, _: MouseOnly) -> TableOutcome {
+        self.core.handle(event, MouseOnly)
+    }
+}
+
+impl HandleEvent<Event, Regular, TableOutcome> for TableState<NoSelection> {
+    fn handle(&mut self, event: &Event, _: Regular) -> TableOutcome {
+        self.core.handle(event, Regular)
+    }
+}
+
+impl HandleEvent<Event, MouseOnly, TableOutcome> for TableState<NoSelection> {
+    fn handle(&mut self, event: &Event, _: MouseOnly) -> TableOutcome {
+        self.core.handle(event, MouseOnly)
+    }
+}
+
+impl HandleEvent<Event, Regular, TableOutcome> for TableState<RowSelection> {
+    fn handle(&mut self, event: &Event, _: Regular) -> TableOutcome {
+        self.core.handle(event, Regular)
+    }
+}
+
+impl HandleEvent<Event, MouseOnly, TableOutcome> for TableState<RowSelection> {
+    fn handle(&mut self, event: &Event, _: MouseOnly) -> TableOutcome {
+        self.core.handle(event, MouseOnly)
+    }
+}
+
+impl HandleEvent<Event, Regular, TableOutcome> for TableState<RowSetSelection> {
+    fn handle(&mut self, event: &Event, _: Regular) -> TableOutcome {
+        self.core.handle(event, Regular)
+    }
+}
+
+impl HandleEvent<Event, MouseOnly, TableOutcome> for TableState<RowSetSelection> {
+    fn handle(&mut self, event: &Event, _: MouseOnly) -> TableOutcome {
+        self.core.handle(event, MouseOnly)
+    }
+}
+
+impl<Selection> HandleEvent<Event, DoubleClick, DoubleClickOutcome> for TableState<Selection> {
+    ///   Handles double-click events on the table.
+    fn handle(&mut self, event: &Event, _keymap: DoubleClick) -> DoubleClickOutcome {
+        self.core.handle(event, DoubleClick)
+    }
 }
