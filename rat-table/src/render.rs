@@ -1,8 +1,8 @@
-use std::fmt::{Debug, Formatter};
-use ratatui_core::buffer::Buffer;
 use crate::_private::NonExhaustive;
+use ratatui_core::buffer::Buffer;
 use ratatui_core::layout::Rect;
 use ratatui_core::style::Style;
+use std::fmt::{Debug, Formatter};
 
 /// Render-context for rendering a table-cell.
 #[derive(Debug)]
@@ -19,8 +19,6 @@ pub struct RenderContext {
 
     /// Base style
     pub style: Style,
-    /// Row style if any.
-    pub row_style: Option<Style>,
     /// Selection style if any.
     pub select_style: Option<Style>,
 
@@ -34,6 +32,16 @@ pub struct RenderContext {
     pub non_exhaustive: NonExhaustive,
 }
 
+/// Return value for [RenderTableRow::render_row].
+pub enum Cells {
+    /// Skip rendering individual cells.
+    Skip,
+    /// Render the individual cells.
+    Render,
+    /// Render the individual cells but don't draw the background.
+    NoBackground,
+}
+
 /// Trait for accessing the table-data by the Table.
 pub trait RenderTableRow<T> {
     /// Row height for the given item.
@@ -42,13 +50,24 @@ pub trait RenderTableRow<T> {
         1
     }
 
-    /// Row style for the current line.
+    /// Render the row.
+    ///
+    /// The given area is the area for the whole row.
     #[allow(unused_variables)]
-    fn row_style(&self, row: usize, v: T) -> Option<Style> {
-        None
+    fn render_row(
+        &self,
+        row: usize,
+        v: T,
+        area: Rect,
+        buf: &mut Buffer,
+        ctx: &RenderContext,
+    ) -> Cells {
+        Cells::Render
     }
 
     /// Render the given cell for the current line.
+    ///
+    /// The area is the area of the cell.
     fn render_cell(
         &self,
         row: usize,

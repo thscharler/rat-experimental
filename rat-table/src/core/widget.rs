@@ -1,7 +1,7 @@
 use crate::_private::NonExhaustive;
 use crate::LayoutWidth;
 use crate::core::TableCoreState;
-use crate::render::{DefaultRender, RenderContext, RenderTableRow};
+use crate::render::{Cells, DefaultRender, RenderContext, RenderTableRow};
 use crate::selection::TableSelection;
 use crate::selection::row::RowSelection;
 use crate::style::TableStyle;
@@ -44,7 +44,6 @@ pub struct TableCore<'a, T, Selection = RowSelection> {
     footer_style: Option<Style>,
     focus_style: Option<Style>,
 
-    auto_styles: bool,
     select_row_style: Option<Style>,
     show_row_focus: bool,
     select_column_style: Option<Style>,
@@ -80,7 +79,6 @@ impl<'a, T, Selection> Default for TableCore<'a, T, Selection> {
             header_style: Default::default(),
             footer_style: Default::default(),
             focus_style: Default::default(),
-            auto_styles: true,
             select_row_style: Default::default(),
             show_row_focus: true,
             select_column_style: Default::default(),
@@ -585,7 +583,6 @@ pub fn render_table<'a, T, Selection: TableSelection>(
         selected_row: false,
         selected_column: false,
         style: widget.style,
-        row_style: None,
         select_style: None,
         space_area: Default::default(),
         row_area: Default::default(),
@@ -602,24 +599,43 @@ pub fn render_table<'a, T, Selection: TableSelection>(
 
         row = Some(state.vscroll.offset());
         loop {
-            ctx.row_style = widget.render.row_style(row.expect("row"), value);
-            let row_height = widget.render.row_height(row.expect("row"), value);
+            ctx.selected_cell = false;
+            ctx.selected_row = false;
+            ctx.selected_column = false;
+            ctx.select_style = None;
 
             // We render each row to a temporary buffer.
             // For ease of use we start each row at 0,0.
             // We still only render at least partially visible cells.
+            let row_height = widget.render.row_height(row.expect("row"), value);
             let render_row_area = Rect::new(0, 0, width, row_height);
             ctx.row_area = render_row_area;
             row_buf.resize(render_row_area);
             row_heights.push(render_row_area.height);
 
-            if widget.auto_styles {
-                if let Some(row_style) = ctx.row_style {
-                    row_buf.set_style(render_row_area, row_style);
-                } else {
-                    row_buf.set_style(render_row_area, widget.style);
-                }
+            if state.selection.is_selected_row(row.expect("row")) {
+                ctx.selected_row = true;
+                ctx.select_style = patch_select(
+                    widget.select_row_style,
+                    widget.focus_style,
+                    state.focus.get(),
+                    widget.show_row_focus,
+                );
             }
+
+            if let Some(row_style) = ctx.select_style {
+                row_buf.set_style(render_row_area, row_style);
+            } else {
+                row_buf.set_style(render_row_area, widget.style);
+            }
+
+            let render_cells = widget.render.render_row(
+                row.expect("row"),
+                &value,
+                render_row_area,
+                &mut row_buf,
+                &ctx,
+            );
 
             // Target area for the finished row.
             let visible_row_area = Rect::new(
@@ -636,7 +652,7 @@ pub fn render_table<'a, T, Selection: TableSelection>(
             }
 
             // can skip this entirely
-            if render_row_area.height > 0 {
+            if !matches!(render_cells, Cells::Skip) && render_row_area.height > 0 {
                 let mut col = 0;
                 loop {
                     if col >= state.columns {
@@ -656,39 +672,7 @@ pub fn render_table<'a, T, Selection: TableSelection>(
                         render_row_area.height,
                     );
 
-                    if state.selection.is_selected_cell(col, row.expect("row")) {
-                        ctx.selected_cell = true;
-                        ctx.selected_row = false;
-                        ctx.selected_column = false;
-                        ctx.select_style = patch_select(
-                            widget.select_cell_style,
-                            widget.focus_style,
-                            state.focus.get(),
-                            widget.show_cell_focus,
-                        );
-                    } else if state.selection.is_selected_row(row.expect("row")) {
-                        ctx.selected_cell = false;
-                        ctx.selected_row = true;
-                        ctx.selected_column = false;
-                        // use a fallback if no row-selected style is set.
-                        ctx.select_style = if widget.select_row_style.is_some() {
-                            patch_select(
-                                widget.select_row_style,
-                                widget.focus_style,
-                                state.focus.get(),
-                                widget.show_row_focus,
-                            )
-                        } else {
-                            patch_select(
-                                Some(widget.style),
-                                widget.focus_style,
-                                state.focus.get(),
-                                widget.show_row_focus,
-                            )
-                        };
-                    } else if state.selection.is_selected_column(col) {
-                        ctx.selected_cell = false;
-                        ctx.selected_row = false;
+                    if state.selection.is_selected_column(col) {
                         ctx.selected_column = true;
                         ctx.select_style = patch_select(
                             widget.select_column_style,
@@ -696,23 +680,29 @@ pub fn render_table<'a, T, Selection: TableSelection>(
                             state.focus.get(),
                             widget.show_column_focus,
                         );
-                    } else {
-                        ctx.selected_cell = false;
-                        ctx.selected_row = false;
-                        ctx.selected_column = false;
-                        ctx.select_style = None;
+                    }
+
+                    if state.selection.is_selected_cell(col, row.expect("row")) {
+                        ctx.selected_cell = true;
+                        ctx.select_style = patch_select(
+                            widget.select_cell_style,
+                            widget.focus_style,
+                            state.focus.get(),
+                            widget.show_cell_focus,
+                        );
                     }
 
                     // partially visible?
                     if render_cell_area.right() > state.hscroll.offset as u16
                         || render_cell_area.left() < state.hscroll.offset as u16 + area.width
                     {
-                        if widget.auto_styles {
+                        if !matches!(render_cells, Cells::NoBackground) {
                             if let Some(select_style) = ctx.select_style {
                                 row_buf.set_style(render_cell_area, select_style);
                                 row_buf.set_style(ctx.space_area, select_style);
                             }
                         }
+
                         widget.render.render_cell(
                             row.expect("row"),
                             col,
@@ -1028,17 +1018,17 @@ fn patch_select(
     style: Option<Style>,
     focus_style: Option<Style>,
     focus: bool,
-    show: bool,
+    show_focus: bool,
 ) -> Option<Style> {
     if let Some(style) = style {
         if let Some(focus_style) = focus_style {
-            if focus && show {
+            if focus && show_focus {
                 Some(style.patch(focus_style))
             } else {
                 Some(fallback_select_style(style))
             }
         } else {
-            if focus && show {
+            if focus && show_focus {
                 Some(revert_style(style))
             } else {
                 Some(fallback_select_style(style))
