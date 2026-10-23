@@ -1,7 +1,7 @@
 use crate::_private::NonExhaustive;
 use crate::LayoutWidth;
 use crate::core::TableCoreState;
-use crate::render::{Cells, DefaultRender, RenderContext, RenderTableRow};
+use crate::render::{Cells, RenderContext};
 use crate::selection::TableSelection;
 use crate::selection::row::RowSelection;
 use crate::style::TableStyle;
@@ -25,10 +25,15 @@ use std::rc::Rc;
 /// rendering of the table.
 ///
 /// It is used as the backend for the user-facing widgets.
-pub struct TableCore<'a, T, Selection = RowSelection> {
+pub struct TableCore<'a, T: 'a, Selection = RowSelection> {
     header: Vec<Text<'a>>,
     footer: Vec<Text<'a>>,
-    render: Box<dyn for<'b> RenderTableRow<&'b T> + 'a>,
+    row_height_fn: Box<dyn for<'b> FnMut(&'b T, &'b RenderContext) -> u16 + 'a>,
+    render_row_fn: Option<
+        Box<dyn for<'b> FnMut(&'b T, Rect, &'b mut Buffer, &'b RenderContext) -> Cells + 'a>,
+    >,
+    render_cell_fn:
+        Option<Box<dyn for<'b> FnMut(usize, &'b T, Rect, &'b mut Buffer, &'b RenderContext) + 'a>>,
     no_row_count: bool,
 
     widths: Vec<Constraint>,
@@ -61,12 +66,21 @@ pub struct TableCore<'a, T, Selection = RowSelection> {
     _phantom: PhantomData<Selection>,
 }
 
-impl<'a, T, Selection> Default for TableCore<'a, T, Selection> {
+fn default_row_height<'b, T: 'b>(_v: &T, _c: &RenderContext) -> u16 {
+    1
+}
+
+impl<'a, T, Selection> Default for TableCore<'a, T, Selection>
+where
+    T: 'a,
+{
     fn default() -> Self {
         Self {
             header: Default::default(),
             footer: Default::default(),
-            render: Box::new(DefaultRender),
+            row_height_fn: Box::new(default_row_height),
+            render_row_fn: Default::default(),
+            render_cell_fn: Default::default(),
             no_row_count: Default::default(),
             widths: Default::default(),
             flex: Default::default(),
@@ -113,8 +127,29 @@ impl<'a, T, Selection> TableCore<'a, T, Selection> {
     }
 
     #[inline]
-    pub fn render_with(mut self, render: impl for<'b> RenderTableRow<&'b T> + 'a) -> Self {
-        self.render = Box::new(render);
+    pub fn row_height_from(
+        mut self,
+        row_height_fn: impl for<'b> FnMut(&'b T, &'b RenderContext) -> u16 + 'a,
+    ) -> Self {
+        self.row_height_fn = Box::new(row_height_fn);
+        self
+    }
+
+    #[inline]
+    pub fn render_row(
+        mut self,
+        render_row_fn: impl for<'b> FnMut(&'b T, Rect, &'b mut Buffer, &'b RenderContext) -> Cells + 'a,
+    ) -> Self {
+        self.render_row_fn = Some(Box::new(render_row_fn));
+        self
+    }
+
+    #[inline]
+    pub fn render_cell(
+        mut self,
+        render_cell_fn: impl for<'b> FnMut(usize, &'b T, Rect, &'b mut Buffer, &'b RenderContext) + 'a,
+    ) -> Self {
+        self.render_cell_fn = Some(Box::new(render_cell_fn));
         self
     }
 
@@ -508,15 +543,15 @@ where
         state: &mut TableCoreState<Selection>,
     ) {
         if let Some(mut data) = data {
-            render_table(&self, Some(&mut data), area, buf, state);
+            render_table(self, Some(&mut data), area, buf, state);
         } else {
-            render_table(&self, None, area, buf, state);
+            render_table(self, None, area, buf, state);
         }
     }
 }
 
 pub fn render_table<'a, T, Selection: TableSelection>(
-    widget: &TableCore<'a, T, Selection>,
+    mut widget: TableCore<'a, T, Selection>,
     mut data: Option<&mut dyn Iterator<Item = &T>>,
     area: Rect,
     buf: &mut Buffer,
@@ -533,13 +568,13 @@ pub fn render_table<'a, T, Selection: TableSelection>(
         .v_scroll(widget.vscroll.as_ref());
     state.inner = sa.inner(area, Some(&state.hscroll), Some(&state.vscroll));
 
-    let l_rows = layout_areas(widget, state.inner);
+    let l_rows = layout_areas(&widget, state.inner);
     state.header_area = l_rows[0];
     state.table_area = l_rows[1];
     state.footer_area = l_rows[2];
 
     // horizontal layout
-    let (width, l_columns, l_spacers) = layout_columns(widget, state.table_area.width);
+    let (width, l_columns, l_spacers) = layout_columns(&widget, state.table_area.width);
     calculate_column_areas(state.columns, l_columns.as_ref(), l_spacers.as_ref(), state);
 
     // render block only
@@ -547,7 +582,7 @@ pub fn render_table<'a, T, Selection: TableSelection>(
 
     // render header & footer
     render_header(
-        widget,
+        &widget,
         state.columns,
         width,
         l_columns.as_ref(),
@@ -557,7 +592,7 @@ pub fn render_table<'a, T, Selection: TableSelection>(
         state,
     );
     render_footer(
-        widget,
+        &widget,
         state.columns,
         width,
         l_columns.as_ref(),
@@ -578,6 +613,7 @@ pub fn render_table<'a, T, Selection: TableSelection>(
     let mut row_heights = Vec::new();
 
     let mut ctx = RenderContext {
+        row: 0,
         focus: state.focus.get(),
         selected_cell: false,
         selected_row: false,
@@ -599,15 +635,19 @@ pub fn render_table<'a, T, Selection: TableSelection>(
 
         row = Some(state.vscroll.offset());
         loop {
+            ctx.row = row.expect("row");
             ctx.selected_cell = false;
             ctx.selected_row = false;
             ctx.selected_column = false;
             ctx.select_style = None;
+            ctx.focus = false;
+            ctx.row_area = Rect::default();
+            ctx.space_area = Rect::default();
 
             // We render each row to a temporary buffer.
             // For ease of use we start each row at 0,0.
             // We still only render at least partially visible cells.
-            let row_height = widget.render.row_height(row.expect("row"), value);
+            let row_height = (widget.row_height_fn)(value, &ctx);
             let render_row_area = Rect::new(0, 0, width, row_height);
             ctx.row_area = render_row_area;
             row_buf.resize(render_row_area);
@@ -629,13 +669,11 @@ pub fn render_table<'a, T, Selection: TableSelection>(
                 row_buf.set_style(render_row_area, widget.style);
             }
 
-            let render_cells = widget.render.render_row(
-                row.expect("row"),
-                &value,
-                render_row_area,
-                &mut row_buf,
-                &ctx,
-            );
+            let render_cells = if let Some(render_row) = widget.render_row_fn.as_mut() {
+                render_row(value, render_row_area, &mut row_buf, &ctx)
+            } else {
+                Cells::Render
+            };
 
             // Target area for the finished row.
             let visible_row_area = Rect::new(
@@ -707,14 +745,9 @@ pub fn render_table<'a, T, Selection: TableSelection>(
                             }
                         }
 
-                        widget.render.render_cell(
-                            row.expect("row"),
-                            col,
-                            &value,
-                            render_cell_area,
-                            &mut row_buf,
-                            &ctx,
-                        );
+                        if let Some(render_cell) = widget.render_cell_fn.as_mut() {
+                            render_cell(col, value, render_cell_area, &mut row_buf, &ctx);
+                        }
                     }
 
                     col += 1;
@@ -760,12 +793,12 @@ pub fn render_table<'a, T, Selection: TableSelection>(
                 let mut sum_height = row_heights.iter().sum::<u16>();
                 row = Some(row.map_or(nth_row, |row| row + nth_row + 1));
                 loop {
-                    let row_height = widget.render.row_height(row.expect("row"), value);
+                    let row_height = (widget.row_height_fn)(value, &ctx);
                     row_heights.push(row_height);
 
                     // Keep a rolling sum of the heights and drop unnecessary info.
                     // We don't need more info, and there will be a lot more otherwise.
-                    sum_height += row_height;
+                    sum_height += row_height as u16;
                     if sum_height.saturating_sub(row_heights.first().copied().unwrap_or_default())
                         > state.table_area.height
                     {

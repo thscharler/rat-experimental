@@ -14,7 +14,7 @@ pub struct TableVec<'a, T, Selection = RowSelection> {
     core: TableCore<'a, T, Selection>,
 }
 
-impl<'a, T, Selection> Default for TableVec<'a, T, Selection> {
+impl<'a, T: 'a, Selection> Default for TableVec<'a, T, Selection> {
     fn default() -> Self {
         Self {
             core: Default::default(),

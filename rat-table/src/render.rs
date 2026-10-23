@@ -7,6 +7,9 @@ use std::fmt::{Debug, Formatter};
 /// Render-context for rendering a table-cell.
 #[derive(Debug)]
 pub struct RenderContext {
+    /// Row to be rendered.
+    pub row: usize,
+
     /// Focus flag is set.
     pub focus: bool,
 
@@ -40,53 +43,4 @@ pub enum Cells {
     Render,
     /// Render the individual cells but don't draw the background.
     NoBackground,
-}
-
-/// Trait for accessing the table-data by the Table.
-pub trait RenderTableRow<T> {
-    /// Row height for the given item.
-    #[allow(unused_variables)]
-    fn row_height(&self, row: usize, v: T) -> u16 {
-        1
-    }
-
-    /// Render the row.
-    ///
-    /// The given area is the area for the whole row.
-    #[allow(unused_variables)]
-    fn render_row(
-        &self,
-        row: usize,
-        v: T,
-        area: Rect,
-        buf: &mut Buffer,
-        ctx: &RenderContext,
-    ) -> Cells {
-        Cells::Render
-    }
-
-    /// Render the given cell for the current line.
-    ///
-    /// The area is the area of the cell.
-    fn render_cell(
-        &self,
-        row: usize,
-        column: usize,
-        v: T,
-        area: Rect,
-        buf: &mut Buffer,
-        ctx: &RenderContext, //
-    );
-}
-
-impl<'a, T> Debug for dyn RenderTableRow<T> {
-    fn fmt(&self, _: &mut Formatter<'_>) -> std::fmt::Result {
-        Ok(())
-    }
-}
-
-pub(crate) struct DefaultRender;
-
-impl<T> RenderTableRow<T> for DefaultRender {
-    fn render_cell(&self, _: usize, _: usize, _: T, _: Rect, _: &mut Buffer, _: &RenderContext) {}
 }

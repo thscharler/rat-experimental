@@ -16,13 +16,45 @@ macro_rules! derive_table_widget {
             self
         }
 
-        /// How to render a table-row.
+        /// Calculate the row-height from the row-data.
         #[inline]
-        pub fn render_with(
+        pub fn row_height_from(
             mut self,
-            render: impl for<'b> $crate::render::RenderTableRow<&'b T> + 'a,
+            row_height_fn: impl for<'b> FnMut(&'b T, &'b $crate::render::RenderContext) -> u16 + 'a,
         ) -> Self {
-            self.core = self.core.render_with(render);
+            self.core = self.core.row_height_from(row_height_fn);
+            self
+        }
+
+        /// Render the full row-area.
+        #[inline]
+        pub fn render_row(
+            mut self,
+            render_row_fn: impl for<'b> FnMut(
+                &'b T,
+                Rect,
+                &'b mut Buffer,
+                &'b $crate::render::RenderContext,
+            ) -> $crate::render::Cells
+            + 'a,
+        ) -> Self {
+            self.core = self.core.render_row(render_row_fn);
+            self
+        }
+
+        /// Render the table cells.
+        #[inline]
+        pub fn render_cell(
+            mut self,
+            render_cell_fn: impl for<'b> FnMut(
+                usize,
+                &'b T,
+                Rect,
+                &'b mut Buffer,
+                &'b $crate::render::RenderContext,
+            ) + 'a,
+        ) -> Self {
+            self.core = self.core.render_cell(render_cell_fn);
             self
         }
 
