@@ -9,7 +9,7 @@ use rat_event::{HandleEvent, Outcome, Regular, event_flow};
 use rat_focus::HasFocus;
 use rat_scrolled::{Scroll, ScrollStyle};
 use rat_table::selection::cell::CellSelection;
-use rat_table::{RenderContext, Table, TableState};
+use rat_table::{Table, TableState};
 use rat_theme4::theme::SalsaTheme;
 use rat_theme4::{RatWidgetColor, StyleName};
 use ratatui_core::buffer::Buffer;
@@ -65,6 +65,10 @@ fn render(
         .flex(Flex::Center)
         .split(area);
 
+    let row_fmt = NumberFormat::new("000000").expect("fmt");
+    let num1_fmt = NumberFormat::new("####0.00").expect("fmt");
+    let num2_fmt = NumberFormat::new("####0.00").expect("fmt");
+
     Table::default()
         .data(state.table_data.iter())
         .widths([
@@ -89,32 +93,26 @@ fn render(
         .select_column_style(Some(ctx.theme.p.style_alias(Color::DOCUMENT_BASE_BG)))
         .select_cell_style(Some(ctx.theme.p.primary(3)))
         .row_height_from(|v, r| 1)
-        .render_cell(|column, v, area, buf, ctx| match column {
-            0 => {
-                let row_fmt = NumberFormat::new("000000").expect("fmt");
-                let span = Span::from(row_fmt.fmt_u(ctx.row));
-                span.render(area, buf);
-            }
-            1 => {
-                let span = Span::from(v.text);
-                span.render(area, buf);
-            }
-            2 => {
-                let num1_fmt = NumberFormat::new("####0.00").expect("fmt");
-                let span = Span::from(num1_fmt.fmt_u(v.num1));
-                span.render(area, buf);
-            }
-            3 => {
-                let num2_fmt = NumberFormat::new("####0.00").expect("fmt");
-                let span = Span::from(num2_fmt.fmt_u(v.num2));
-                span.render(area, buf);
-            }
-            4 => {
-                let cc = if v.check { "\u{2622}" } else { "\u{2623}" };
-                let span = Span::from(cc);
-                span.render(area, buf);
-            }
-            _ => {}
+        .render_cell(0, |v, area, buf, ctx| {
+            let span = Span::from(row_fmt.fmt_u(ctx.row));
+            span.render(area, buf);
+        })
+        .render_cell(1, |v, area, buf, _ctx| {
+            let span = Span::from(v.text);
+            span.render(area, buf);
+        })
+        .render_cell(2, |v, area, buf, _ctx| {
+            let span = Span::from(num1_fmt.fmt_u(v.num1));
+            span.render(area, buf);
+        })
+        .render_cell(3, |v, area, buf, _ctx| {
+            let span = Span::from(num2_fmt.fmt_u(v.num2));
+            span.render(area, buf);
+        })
+        .render_cell(4, |v, area, buf, _ctx| {
+            let cc = if v.check { "\u{2622}" } else { "\u{2623}" };
+            let span = Span::from(cc);
+            span.render(area, buf);
         })
         .render(l0[0], buf, &mut state.table);
 

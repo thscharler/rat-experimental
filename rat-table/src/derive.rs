@@ -46,15 +46,15 @@ macro_rules! derive_table_widget {
         #[inline]
         pub fn render_cell(
             mut self,
+            column: usize,
             render_cell_fn: impl for<'b> FnMut(
-                usize,
                 &'b T,
                 Rect,
                 &'b mut Buffer,
                 &'b $crate::render::RenderContext,
             ) + 'a,
         ) -> Self {
-            self.core = self.core.render_cell(render_cell_fn);
+            self.core = self.core.render_cell(column, render_cell_fn);
             self
         }
 

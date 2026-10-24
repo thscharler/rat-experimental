@@ -33,7 +33,7 @@ pub struct TableCore<'a, T: 'a, Selection = RowSelection> {
         Box<dyn for<'b> FnMut(&'b T, Rect, &'b mut Buffer, &'b RenderContext) -> Cells + 'a>,
     >,
     render_cell_fn:
-        Option<Box<dyn for<'b> FnMut(usize, &'b T, Rect, &'b mut Buffer, &'b RenderContext) + 'a>>,
+        Vec<Option<Box<dyn for<'b> FnMut(&'b T, Rect, &'b mut Buffer, &'b RenderContext) + 'a>>>,
     no_row_count: bool,
 
     widths: Vec<Constraint>,
@@ -147,9 +147,13 @@ impl<'a, T, Selection> TableCore<'a, T, Selection> {
     #[inline]
     pub fn render_cell(
         mut self,
-        render_cell_fn: impl for<'b> FnMut(usize, &'b T, Rect, &'b mut Buffer, &'b RenderContext) + 'a,
+        column: usize,
+        render_cell_fn: impl for<'b> FnMut(&'b T, Rect, &'b mut Buffer, &'b RenderContext) + 'a,
     ) -> Self {
-        self.render_cell_fn = Some(Box::new(render_cell_fn));
+        while self.render_cell_fn.len() <= column {
+            self.render_cell_fn.push(None);
+        }
+        self.render_cell_fn[column] = Some(Box::new(render_cell_fn));
         self
     }
 
@@ -745,8 +749,8 @@ pub fn render_table<'a, T, Selection: TableSelection>(
                             }
                         }
 
-                        if let Some(render_cell) = widget.render_cell_fn.as_mut() {
-                            render_cell(col, value, render_cell_area, &mut row_buf, &ctx);
+                        if let Some(Some(render_cell)) = widget.render_cell_fn.get_mut(col) {
+                            render_cell(value, render_cell_area, &mut row_buf, &ctx);
                         }
                     }
 
