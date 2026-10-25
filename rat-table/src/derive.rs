@@ -16,13 +16,13 @@ macro_rules! derive_table_widget {
             self
         }
 
-        /// Calculate the row-height from the row-data.
+        /// Calculate the row-height from the data.
         #[inline]
-        pub fn row_height_from(
+        pub fn row_height(
             mut self,
             row_height_fn: impl for<'b> FnMut(&'b T, &'b $crate::render::RenderContext) -> u16 + 'a,
         ) -> Self {
-            self.core = self.core.row_height_from(row_height_fn);
+            self.core = self.core.row_height(row_height_fn);
             self
         }
 

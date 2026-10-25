@@ -1,13 +1,12 @@
 use crate::_private::NonExhaustive;
-use ratatui_core::buffer::Buffer;
 use ratatui_core::layout::Rect;
 use ratatui_core::style::Style;
-use std::fmt::{Debug, Formatter};
+use std::fmt::Debug;
 
 /// Render-context for rendering a table-cell.
 #[derive(Debug)]
-pub struct RenderContext {
-    /// Row to be rendered.
+pub struct RenderContext<'a> {
+    /// Current row.
     pub row: usize,
 
     /// Focus flag is set.
@@ -25,8 +24,12 @@ pub struct RenderContext {
     /// Selection style if any.
     pub select_style: Option<Style>,
 
-    /// Spacing after the cell. It's guaranteed that this
-    /// is writeable in the buffer given to render_cell.
+    /// Column layout for all columns.
+    /// Only the x-position and width are set,
+    /// y-position and height are 0.
+    pub column_layout: &'a [Rect],
+    /// Spacing after the current cell.
+    /// Will be empty when calling row-rendering.
     pub space_area: Rect,
     /// Total area for the current row.
     pub row_area: Rect,

@@ -71,6 +71,22 @@ fn render(
 
     Table::default()
         .data(state.table_data.iter())
+        .render_cell(0, |_, area, buf, ctx| {
+            row_fmt.fmt_u(ctx.row).render(area, buf);
+        })
+        .render_cell(1, |v, area, buf, _ctx| {
+            v.text.render(area, buf);
+        })
+        .render_cell(2, |v, area, buf, _ctx| {
+            num1_fmt.fmt_u(v.num1).render(area, buf);
+        })
+        .render_cell(3, |v, area, buf, _ctx| {
+            num2_fmt.fmt_u(v.num2).render(area, buf);
+        })
+        .render_cell(4, |v, area, buf, _ctx| {
+            let cc = if v.check { "\u{2622}" } else { "\u{2623}" };
+            cc.render(area, buf);
+        })
         .widths([
             Constraint::Length(6),
             Constraint::Length(20),
@@ -78,6 +94,7 @@ fn render(
             Constraint::Length(15),
             Constraint::Length(3),
         ])
+        .row_height(|_, _| 1)
         .column_spacing(1)
         .header(vec!["Nr", "Text", "Val1", "Val2", "State"])
         .footer(vec!["a", "b", "c", "d", "e"])
@@ -92,28 +109,6 @@ fn render(
         .select_row_style(Some(ctx.theme.p.primary(1)))
         .select_column_style(Some(ctx.theme.p.style_alias(Color::DOCUMENT_BASE_BG)))
         .select_cell_style(Some(ctx.theme.p.primary(3)))
-        .row_height_from(|v, r| 1)
-        .render_cell(0, |v, area, buf, ctx| {
-            let span = Span::from(row_fmt.fmt_u(ctx.row));
-            span.render(area, buf);
-        })
-        .render_cell(1, |v, area, buf, _ctx| {
-            let span = Span::from(v.text);
-            span.render(area, buf);
-        })
-        .render_cell(2, |v, area, buf, _ctx| {
-            let span = Span::from(num1_fmt.fmt_u(v.num1));
-            span.render(area, buf);
-        })
-        .render_cell(3, |v, area, buf, _ctx| {
-            let span = Span::from(num2_fmt.fmt_u(v.num2));
-            span.render(area, buf);
-        })
-        .render_cell(4, |v, area, buf, _ctx| {
-            let cc = if v.check { "\u{2622}" } else { "\u{2623}" };
-            let span = Span::from(cc);
-            span.render(area, buf);
-        })
         .render(l0[0], buf, &mut state.table);
 
     Ok(())

@@ -126,8 +126,9 @@ impl<'a, T, Selection> TableCore<'a, T, Selection> {
         self
     }
 
+    /// Set the closure that calculates the row-height for a value.
     #[inline]
-    pub fn row_height_from(
+    pub fn row_height(
         mut self,
         row_height_fn: impl for<'b> FnMut(&'b T, &'b RenderContext) -> u16 + 'a,
     ) -> Self {
@@ -135,6 +136,7 @@ impl<'a, T, Selection> TableCore<'a, T, Selection> {
         self
     }
 
+    /// Set a closure for row-level rendering.
     #[inline]
     pub fn render_row(
         mut self,
@@ -144,6 +146,7 @@ impl<'a, T, Selection> TableCore<'a, T, Selection> {
         self
     }
 
+    /// Set a closure for rendering one column.
     #[inline]
     pub fn render_cell(
         mut self,
@@ -624,6 +627,7 @@ pub fn render_table<'a, T, Selection: TableSelection>(
         selected_column: false,
         style: widget.style,
         select_style: None,
+        column_layout: &state.column_layout,
         space_area: Default::default(),
         row_area: Default::default(),
         non_exhaustive: NonExhaustive,
@@ -738,7 +742,7 @@ pub fn render_table<'a, T, Selection: TableSelection>(
                         );
                     }
 
-                    // partially visible?
+                    // at least partially visible?
                     if render_cell_area.right() > state.hscroll.offset as u16
                         || render_cell_area.left() < state.hscroll.offset as u16 + area.width
                     {

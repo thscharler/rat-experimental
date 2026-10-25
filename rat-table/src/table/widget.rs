@@ -7,10 +7,7 @@ use ratatui_core::buffer::Buffer;
 use ratatui_core::layout::Rect;
 use ratatui_core::widgets::StatefulWidget;
 
-/// Table widget that renders an Iterator.
-///
-/// Rendering of one row/value of the table is forwarded
-/// to an instance of [RenderTableRow][crate::RenderTableRow].
+/// Table widget that renders data from an Iterator.
 ///
 /// This will do minimal rendering of the visible rows/cells
 /// of the table.
