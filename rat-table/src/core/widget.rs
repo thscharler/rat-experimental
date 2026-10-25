@@ -28,12 +28,9 @@ use std::rc::Rc;
 pub struct TableCore<'a, T: 'a, Selection = RowSelection> {
     header: Vec<Text<'a>>,
     footer: Vec<Text<'a>>,
-    row_height_fn: Box<dyn for<'b> FnMut(&'b T, &'b RenderContext) -> u16 + 'a>,
-    render_row_fn: Option<
-        Box<dyn for<'b> FnMut(&'b T, Rect, &'b mut Buffer, &'b RenderContext) -> Cells + 'a>,
-    >,
-    render_cell_fn:
-        Vec<Option<Box<dyn for<'b> FnMut(&'b T, Rect, &'b mut Buffer, &'b RenderContext) + 'a>>>,
+    row_height_fn: Box<dyn FnMut(&T, &RenderContext) -> u16 + 'a>,
+    render_row_fn: Option<Box<dyn FnMut(&T, Rect, &mut Buffer, &RenderContext) -> Cells + 'a>>,
+    render_cell_fn: Vec<Option<Box<dyn FnMut(&T, Rect, &mut Buffer, &RenderContext) + 'a>>>,
     no_row_count: bool,
 
     widths: Vec<Constraint>,
@@ -128,10 +125,7 @@ impl<'a, T, Selection> TableCore<'a, T, Selection> {
 
     /// Set the closure that calculates the row-height for a value.
     #[inline]
-    pub fn row_height(
-        mut self,
-        row_height_fn: impl for<'b> FnMut(&'b T, &'b RenderContext) -> u16 + 'a,
-    ) -> Self {
+    pub fn row_height(mut self, row_height_fn: impl FnMut(&T, &RenderContext) -> u16 + 'a) -> Self {
         self.row_height_fn = Box::new(row_height_fn);
         self
     }
@@ -140,7 +134,7 @@ impl<'a, T, Selection> TableCore<'a, T, Selection> {
     #[inline]
     pub fn render_row(
         mut self,
-        render_row_fn: impl for<'b> FnMut(&'b T, Rect, &'b mut Buffer, &'b RenderContext) -> Cells + 'a,
+        render_row_fn: impl FnMut(&T, Rect, &mut Buffer, &RenderContext) -> Cells + 'a,
     ) -> Self {
         self.render_row_fn = Some(Box::new(render_row_fn));
         self
@@ -151,7 +145,7 @@ impl<'a, T, Selection> TableCore<'a, T, Selection> {
     pub fn render_cell(
         mut self,
         column: usize,
-        render_cell_fn: impl for<'b> FnMut(&'b T, Rect, &'b mut Buffer, &'b RenderContext) + 'a,
+        render_cell_fn: impl FnMut(&T, Rect, &mut Buffer, &RenderContext) + 'a,
     ) -> Self {
         while self.render_cell_fn.len() <= column {
             self.render_cell_fn.push(None);

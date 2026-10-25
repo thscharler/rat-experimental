@@ -13,7 +13,7 @@ use rat_focus::HasFocus;
 use rat_scrolled::{Scroll, ScrollStyle};
 use rat_table::event::Outcome;
 use rat_table::selection::row::RowSelection;
-use rat_table::{RenderContext, RenderTableRow, Table, TableState};
+use rat_table::{Table, TableState};
 use rat_theme4::StyleName;
 use rat_theme4::palette::Colors;
 use rat_theme4::theme::SalsaTheme;
@@ -149,48 +149,9 @@ fn render(
     let goto = Span::from("GOTO 1_000_000").style(ctx.theme.p.deepblue(0));
     goto.render(state.edit[0][9], buf);
 
-    // table
-    struct R;
-
-    impl RenderTableRow<&Sample> for R {
-        fn render_cell(
-            &self,
-            row: usize,
-            column: usize,
-            v: &Sample,
-            area: Rect,
-            buf: &mut Buffer,
-            _ctx: &RenderContext,
-        ) {
-            match column {
-                0 => {
-                    let row_fmt = NumberFormat::new("000000").expect("fmt");
-                    let span = Span::from(row_fmt.fmt_u(row));
-                    span.render(area, buf);
-                }
-                1 => {
-                    let span = Span::from(v.text);
-                    span.render(area, buf);
-                }
-                2 => {
-                    let num1_fmt = NumberFormat::new("####0.00").expect("fmt");
-                    let span = Span::from(num1_fmt.fmt_u(v.num1));
-                    span.render(area, buf);
-                }
-                3 => {
-                    let num2_fmt = NumberFormat::new("####0.00").expect("fmt");
-                    let span = Span::from(num2_fmt.fmt_u(v.num2));
-                    span.render(area, buf);
-                }
-                4 => {
-                    let cc = if v.check { "\u{2622}" } else { "\u{2623}" };
-                    let span = Span::from(cc);
-                    span.render(area, buf);
-                }
-                _ => {}
-            }
-        }
-    }
+    let row_fmt = NumberFormat::new("000000").expect("fmt");
+    let num1_fmt = NumberFormat::new("####0.00").expect("fmt");
+    let num2_fmt = NumberFormat::new("####0.00").expect("fmt");
 
     Table::default()
         .data(state.table_data.iter())
@@ -204,6 +165,20 @@ fn render(
         .column_spacing(1)
         .header(vec!["Nr", "Text", "Val1", "Val2", "State"])
         .footer(vec!["a", "b", "c", "d", "e"])
+        .render_cell(0, |_v, area, buf, ctx| {
+            row_fmt.fmt_u(ctx.row).render(area, buf)
+        })
+        .render_cell(1, |v, area, buf, _ctx| v.text.render(area, buf))
+        .render_cell(2, |v, area, buf, _ctx| {
+            num1_fmt.fmt_u(v.num1).render(area, buf)
+        })
+        .render_cell(3, |v, area, buf, _ctx| {
+            num2_fmt.fmt_u(v.num2).render(area, buf)
+        })
+        .render_cell(4, |v, area, buf, _ctx| {
+            let cc = if v.check { "\u{2622}" } else { "\u{2623}" };
+            cc.render(area, buf);
+        })
         .block(
             Block::bordered()
                 .border_type(BorderType::Rounded)
@@ -213,7 +188,6 @@ fn render(
         .flex(Flex::End)
         .styles(table(&ctx.theme))
         .select_row_style(Some(ctx.theme.p.gray(3)))
-        .render_with(R)
         .render(l0[1], buf, &mut state.table);
 
     render_tablestate(&state.table, l1[2], buf);

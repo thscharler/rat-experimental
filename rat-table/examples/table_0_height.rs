@@ -12,13 +12,12 @@ use rat_focus::HasFocus;
 use rat_scrolled::{Scroll, ScrollStyle};
 use rat_table::event::Outcome;
 use rat_table::selection::row::RowSelection;
-use rat_table::{RenderContext, RenderTableRow, Table, TableState};
+use rat_table::{Cells, Table, TableState};
 use rat_theme4::StyleName;
 use rat_theme4::theme::SalsaTheme;
 use ratatui_core::buffer::Buffer;
 use ratatui_core::layout::{Constraint, Flex, Layout, Rect};
 use ratatui_core::style::Style;
-use ratatui_core::text::Span;
 use ratatui_core::widgets::{StatefulWidget, Widget};
 use ratatui_crossterm::crossterm::event::Event;
 use ratatui_widgets::block::Block;
@@ -72,70 +71,9 @@ fn render(
         .flex(Flex::Center)
         .split(area);
 
-    struct RenderSample {
-        fmt1: NumberFormat,
-        fmt2: NumberFormat,
-        txt: RefCell<String>,
-    }
-
-    impl RenderTableRow<&Sample> for RenderSample {
-        fn row_height(&self, _row: usize, v: &Sample) -> u16 {
-            v.row_height
-        }
-
-        fn render_cell(
-            &self,
-            row: usize,
-            column: usize,
-            item: &Sample,
-            area: Rect,
-            buf: &mut Buffer,
-            ctx: &RenderContext,
-        ) {
-            match column {
-                0 => {
-                    let span = Span::from(self.fmt1.fmt_u(row));
-                    span.render(area, buf);
-                }
-                1 => {
-                    let span = Span::from(item.text);
-                    span.render(area, buf);
-                }
-                2 => {
-                    let span = Span::from(self.fmt2.fmt_u(item.num1));
-                    span.render(area, buf);
-                }
-                3 => {
-                    let span = Span::from(self.fmt2.fmt_u(item.num2));
-                    span.render(area, buf);
-                }
-                4 => {
-                    let cc = if item.check { "\u{2622}" } else { "\u{2623}" };
-                    let span = Span::from(cc);
-                    span.render(area, buf);
-                }
-                _ => {}
-            }
-
-            let mut extra = ctx.row_area;
-            if extra.height > 1 {
-                extra.x = 7;
-                extra.y = 1;
-                for r in 1..extra.height {
-                    let mut txt = self.txt.borrow_mut();
-                    txt.clear();
-
-                    for w in 0..7 {
-                        txt.push_str(SMALL_DATA[(r * 7 + w) as usize]);
-                        txt.push(' ');
-                    }
-                    txt.as_str().render(extra, buf);
-
-                    extra.y += 1;
-                }
-            }
-        }
-    }
+    let mut tmp = String::default();
+    let fmt1 = NumberFormat::new("000000").expect("fmt");
+    let fmt2 = NumberFormat::new("####0.00").expect("fmt");
 
     Table::default()
         .data(state.table_data.iter())
@@ -146,6 +84,33 @@ fn render(
             Constraint::Length(15),
             Constraint::Length(3),
         ])
+        .row_height(|v, _| v.row_height)
+        .render_row(|_v, mut area, buf, _ctx| {
+            if area.height > 1 {
+                area.x = 7;
+                area.y = 1;
+                for r in 1..area.height {
+                    tmp.clear();
+                    for w in 0..7 {
+                        tmp.push_str(SMALL_DATA[(r * 7 + w) as usize]);
+                        tmp.push(' ');
+                    }
+                    tmp.as_str().render(area, buf);
+                    area.y += 1;
+                }
+            }
+            Cells::Render
+        })
+        .render_cell(0, |_v, area, buf, ctx| {
+            fmt1.fmt_u(ctx.row).render(area, buf)
+        })
+        .render_cell(1, |v, area, buf, _ctx| v.text.render(area, buf))
+        .render_cell(2, |v, area, buf, _ctx| fmt2.fmt_u(v.num1).render(area, buf))
+        .render_cell(3, |v, area, buf, _ctx| fmt1.fmt_u(v.num2).render(area, buf))
+        .render_cell(4, |v, area, buf, _ctx| {
+            let cc = if v.check { "\u{2622}" } else { "\u{2623}" };
+            cc.render(area, buf)
+        })
         .column_spacing(1)
         .header(vec!["Nr", "Text", "Val1", "Val2", "State"])
         .footer(vec!["a", "b", "c", "d", "e"])
@@ -157,11 +122,6 @@ fn render(
         .vscroll(Scroll::new())
         .flex(Flex::End)
         .styles(table(&ctx.theme))
-        .render_with(RenderSample {
-            fmt1: NumberFormat::new("000000").expect("fmt"),
-            fmt2: NumberFormat::new("####0.00").expect("fmt"),
-            txt: Default::default(),
-        })
         .render(l0[0], buf, &mut state.table);
 
     render_tablestate_row(&state.table, l0[1], buf);

@@ -11,13 +11,12 @@ use rat_focus::HasFocus;
 use rat_scrolled::{Scroll, ScrollStyle};
 use rat_table::event::Outcome;
 use rat_table::selection::row::RowSelection;
-use rat_table::{LayoutWidth, RenderContext, RenderTableRow, Table, TableState};
+use rat_table::{LayoutWidth, Table, TableState};
 use rat_theme4::StyleName;
 use rat_theme4::theme::SalsaTheme;
 use ratatui_core::buffer::Buffer;
 use ratatui_core::layout::{Constraint, Flex, Layout, Rect};
 use ratatui_core::style::Style;
-use ratatui_core::text::Span;
 use ratatui_core::widgets::{StatefulWidget, Widget};
 use ratatui_crossterm::crossterm::event::Event;
 use ratatui_widgets::block::Block;
@@ -68,47 +67,9 @@ fn render(
         .flex(Flex::Center)
         .split(area);
 
-    struct R;
-
-    impl RenderTableRow<&Sample> for R {
-        fn render_cell(
-            &self,
-            row: usize,
-            column: usize,
-            v: &Sample,
-            area: Rect,
-            buf: &mut Buffer,
-            _ctx: &RenderContext,
-        ) {
-            match column {
-                0 => {
-                    let row_fmt = NumberFormat::new("000000").expect("fmt");
-                    let span = Span::from(row_fmt.fmt_u(row));
-                    span.render(area, buf);
-                }
-                1 => {
-                    let span = Span::from(v.text);
-                    span.render(area, buf);
-                }
-                2 => {
-                    let num1_fmt = NumberFormat::new("####0.00").expect("fmt");
-                    let span = Span::from(num1_fmt.fmt_u(v.num1));
-                    span.render(area, buf);
-                }
-                3 => {
-                    let num2_fmt = NumberFormat::new("####0.00").expect("fmt");
-                    let span = Span::from(num2_fmt.fmt_u(v.num2));
-                    span.render(area, buf);
-                }
-                4 => {
-                    let cc = if v.check { "\u{2622}" } else { "\u{2623}" };
-                    let span = Span::from(cc);
-                    span.render(area, buf);
-                }
-                _ => {}
-            }
-        }
-    }
+    let row_fmt = NumberFormat::new("000000").expect("fmt");
+    let num1_fmt = NumberFormat::new("####0.00").expect("fmt");
+    let num2_fmt = NumberFormat::new("####0.00").expect("fmt");
 
     Table::default()
         .data(&state.table_data)
@@ -119,6 +80,20 @@ fn render(
             Constraint::Length(15),
             Constraint::Length(3),
         ])
+        .render_cell(0, |_v, area, buf, ctx| {
+            row_fmt.fmt_u(ctx.row).render(area, buf)
+        })
+        .render_cell(1, |v, area, buf, _ctx| v.text.render(area, buf))
+        .render_cell(2, |v, area, buf, _ctx| {
+            num1_fmt.fmt_u(v.num1).render(area, buf)
+        })
+        .render_cell(3, |v, area, buf, _ctx| {
+            num2_fmt.fmt_u(v.num2).render(area, buf)
+        })
+        .render_cell(4, |v, area, buf, _ctx| {
+            let cc = if v.check { "\u{2622}" } else { "\u{2623}" };
+            cc.render(area, buf);
+        })
         // use a fixed total.
         .layout_width(LayoutWidth::Length(150))
         .column_spacing(1)
@@ -133,7 +108,6 @@ fn render(
         .vscroll(Scroll::new())
         .flex(Flex::SpaceBetween)
         .styles(table(&ctx.theme))
-        .render_with(R)
         .render(l0[0], buf, &mut state.table);
 
     render_tablestate(&state.table, l0[1], buf);
