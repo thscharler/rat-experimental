@@ -287,7 +287,7 @@ impl<Selection: TableSelection> TableCoreState<Selection> {
     pub fn rows_changed(&mut self, rows: usize) {
         self.selection.validate_rows(rows);
         self.vscroll
-            .set_max_offset(self.rows.saturating_sub(self.table_area.height as usize));
+            .set_max_offset(self.rows.saturating_sub(self.vscroll.page_len));
         self.vscroll.offset = self.vscroll.limited_offset(self.vscroll.offset);
         self.rows = rows;
     }
