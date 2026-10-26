@@ -174,55 +174,57 @@ impl<T> TableVecState<T, CellSelection> {
     derive_table_widget_state!(CELLSELECTION);
 }
 
-impl HandleEvent<Event, Regular, TableOutcome> for TableVecState<CellSelection> {
+impl<T> HandleEvent<Event, Regular, TableOutcome> for TableVecState<T, CellSelection> {
     fn handle(&mut self, event: &Event, _: Regular) -> TableOutcome {
         self.core.handle(event, Regular)
     }
 }
 
-impl HandleEvent<Event, MouseOnly, TableOutcome> for TableVecState<CellSelection> {
+impl<T> HandleEvent<Event, MouseOnly, TableOutcome> for TableVecState<T, CellSelection> {
     fn handle(&mut self, event: &Event, _: MouseOnly) -> TableOutcome {
         self.core.handle(event, MouseOnly)
     }
 }
 
-impl HandleEvent<Event, Regular, TableOutcome> for TableVecState<NoSelection> {
+impl<T> HandleEvent<Event, Regular, TableOutcome> for TableVecState<T, NoSelection> {
     fn handle(&mut self, event: &Event, _: Regular) -> TableOutcome {
         self.core.handle(event, Regular)
     }
 }
 
-impl HandleEvent<Event, MouseOnly, TableOutcome> for TableVecState<NoSelection> {
+impl<T> HandleEvent<Event, MouseOnly, TableOutcome> for TableVecState<T, NoSelection> {
     fn handle(&mut self, event: &Event, _: MouseOnly) -> TableOutcome {
         self.core.handle(event, MouseOnly)
     }
 }
 
-impl HandleEvent<Event, Regular, TableOutcome> for TableVecState<RowSelection> {
+impl<T> HandleEvent<Event, Regular, TableOutcome> for TableVecState<T, RowSelection> {
     fn handle(&mut self, event: &Event, _: Regular) -> TableOutcome {
         self.core.handle(event, Regular)
     }
 }
 
-impl HandleEvent<Event, MouseOnly, TableOutcome> for TableVecState<RowSelection> {
+impl<T> HandleEvent<Event, MouseOnly, TableOutcome> for TableVecState<T, RowSelection> {
     fn handle(&mut self, event: &Event, _: MouseOnly) -> TableOutcome {
         self.core.handle(event, MouseOnly)
     }
 }
 
-impl HandleEvent<Event, Regular, TableOutcome> for TableVecState<RowSetSelection> {
+impl<T> HandleEvent<Event, Regular, TableOutcome> for TableVecState<T, RowSetSelection> {
     fn handle(&mut self, event: &Event, _: Regular) -> TableOutcome {
         self.core.handle(event, Regular)
     }
 }
 
-impl HandleEvent<Event, MouseOnly, TableOutcome> for TableVecState<RowSetSelection> {
+impl<T> HandleEvent<Event, MouseOnly, TableOutcome> for TableVecState<T, RowSetSelection> {
     fn handle(&mut self, event: &Event, _: MouseOnly) -> TableOutcome {
         self.core.handle(event, MouseOnly)
     }
 }
 
-impl<Selection> HandleEvent<Event, DoubleClick, DoubleClickOutcome> for TableVecState<Selection> {
+impl<T, Selection> HandleEvent<Event, DoubleClick, DoubleClickOutcome>
+    for TableVecState<T, Selection>
+{
     ///   Handles double-click events on the table.
     fn handle(&mut self, event: &Event, _keymap: DoubleClick) -> DoubleClickOutcome {
         self.core.handle(event, DoubleClick)
