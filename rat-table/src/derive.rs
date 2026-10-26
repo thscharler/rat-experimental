@@ -19,7 +19,7 @@ macro_rules! derive_table_widget {
         #[inline]
         pub fn row_height(
             mut self,
-            row_height_fn: impl FnMut(&T, &$crate::render::RenderContext) -> u16 + 'a,
+            row_height_fn: impl FnMut(&T, &$crate::RenderContext) -> u16 + 'a,
         ) -> Self {
             self.core = self.core.row_height(row_height_fn);
             self
@@ -33,8 +33,8 @@ macro_rules! derive_table_widget {
                 &T,
                 Rect,
                 &mut Buffer,
-                &$crate::render::RenderContext,
-            ) -> $crate::render::Cells
+                &$crate::RenderContext,
+            ) -> $crate::Cells
             + 'a,
         ) -> Self {
             self.core = self.core.render_row(render_row_fn);
@@ -46,7 +46,7 @@ macro_rules! derive_table_widget {
         pub fn render_cell(
             mut self,
             column: usize,
-            render_cell_fn: impl FnMut(&T, Rect, &mut Buffer, &$crate::render::RenderContext) + 'a,
+            render_cell_fn: impl FnMut(&T, Rect, &mut Buffer, &$crate::RenderContext) + 'a,
         ) -> Self {
             self.core = self.core.render_cell(column, render_cell_fn);
             self
