@@ -1,7 +1,6 @@
 /// Implements forward calls to core for a Table widget.
 ///
 /// __Only useful if you want to implement a new Table widget__
-#[macro_export]
 macro_rules! derive_table_widget {
     () => {
         /// Normally rendering runs the iterator to the end to find
@@ -303,7 +302,6 @@ macro_rules! derive_table_widget {
 /// for usage.
 ///
 /// __Only useful if you want to implement a new Table widget__
-#[macro_export]
 macro_rules! derive_table_widget_state {
     (BASE) => {
         /// Number of rows.
@@ -764,3 +762,6 @@ macro_rules! derive_table_widget_state {
         }
     };
 }
+
+pub(crate) use derive_table_widget;
+pub(crate) use derive_table_widget_state;
