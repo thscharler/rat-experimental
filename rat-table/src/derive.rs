@@ -292,8 +292,8 @@ macro_rules! derive_table_widget {
 
         /// Inherent height.
         #[inline]
-        pub fn heigth(&self) -> u16 {
-            self.core.heigth()
+        pub fn height(&self) -> u16 {
+            self.core.height()
         }
     };
 }

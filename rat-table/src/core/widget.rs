@@ -414,7 +414,7 @@ impl<'a, T, Selection> TableCore<'a, T, Selection> {
     }
 
     /// Inherent height.
-    pub fn heigth(&self) -> u16 {
+    pub fn height(&self) -> u16 {
         let sa = ScrollArea::new()
             .style(self.style)
             .block(self.block.as_ref())
