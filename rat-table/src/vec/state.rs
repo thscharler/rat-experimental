@@ -1,6 +1,6 @@
 use crate::_private::NonExhaustive;
 use crate::core::TableCoreState;
-use crate::derive_table_widget_state;
+use crate::derive::derive_table_widget_state;
 use crate::event::{DoubleClickOutcome, TableOutcome};
 use crate::selection::TableSelection;
 use crate::selection::cell::CellSelection;

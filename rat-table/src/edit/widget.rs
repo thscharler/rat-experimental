@@ -1,5 +1,5 @@
 use crate::core::TableCore;
-use crate::derive_table_widget;
+use crate::derive::derive_table_widget;
 use crate::edit::{Mode, TableEditVecState, TableEditor};
 use crate::selection::row::RowSelection;
 use crate::util::clear_buf_area;
