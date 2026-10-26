@@ -527,7 +527,7 @@ where
     }
 }
 
-pub fn render_table<'a, T, Selection: TableSelection>(
+fn render_table<'a, T, Selection: TableSelection>(
     mut widget: TableCore<'a, T, Selection>,
     mut data: Option<&mut dyn Iterator<Item = &T>>,
     area: Rect,
