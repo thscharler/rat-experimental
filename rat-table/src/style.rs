@@ -2,7 +2,6 @@ use crate::_private::NonExhaustive;
 use rat_scrolled::ScrollStyle;
 use ratatui_core::style::Style;
 use ratatui_widgets::block::Block;
-use std::borrow::Cow;
 
 /// Combined style.
 #[derive(Debug, Clone)]
@@ -27,8 +26,6 @@ pub struct TableStyle {
     pub show_cell_focus: bool,
     pub show_header_focus: bool,
     pub show_footer_focus: bool,
-    pub show_empty: bool,
-    pub empty_str: Option<Cow<'static, str>>,
 
     pub non_exhaustive: NonExhaustive,
 }
@@ -49,8 +46,6 @@ impl Default for TableStyle {
             show_cell_focus: Default::default(),
             show_header_focus: Default::default(),
             show_footer_focus: Default::default(),
-            show_empty: Default::default(),
-            empty_str: Default::default(),
             focus_style: Default::default(),
             block: Default::default(),
             border_style: Default::default(),

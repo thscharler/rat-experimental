@@ -284,19 +284,6 @@ macro_rules! derive_table_widget {
             self
         }
 
-        /// Show an indicator if the table is empty.
-        #[inline]
-        pub fn show_empty(mut self, show: bool) -> Self {
-            self.core = self.core.show_empty(show);
-            self
-        }
-
-        #[inline]
-        pub fn show_empty_str(mut self, str: impl Into<std::borrow::Cow<'a, str>>) -> Self {
-            self.core = self.core.show_empty_str(str);
-            self
-        }
-
         /// Inherent width.
         #[inline]
         pub fn width(&self) -> u16 {

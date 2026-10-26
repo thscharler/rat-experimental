@@ -6,15 +6,13 @@ use crate::selection::TableSelection;
 use crate::selection::row::RowSelection;
 use crate::style::TableStyle;
 use crate::util::{fallback_select_style, revert_style, transfer_buffer};
-use rat_focus::HasFocus;
 use rat_scrolled::{Scroll, ScrollArea, ScrollAreaState};
 use ratatui_core::buffer::Buffer;
 use ratatui_core::layout::{Constraint, Flex, Layout, Rect};
 use ratatui_core::style::Style;
-use ratatui_core::text::{Span, Text};
+use ratatui_core::text::Text;
 use ratatui_core::widgets::Widget;
 use ratatui_widgets::block::Block;
-use std::borrow::Cow;
 use std::cmp::max;
 use std::marker::PhantomData;
 use std::rc::Rc;
@@ -57,9 +55,6 @@ pub struct TableCore<'a, T: 'a, Selection = RowSelection> {
     select_footer_style: Option<Style>,
     show_footer_focus: bool,
 
-    show_empty: bool,
-    empty_str: Cow<'a, str>,
-
     _phantom: PhantomData<Selection>,
 }
 
@@ -100,8 +95,6 @@ where
             show_header_focus: Default::default(),
             select_footer_style: Default::default(),
             show_footer_focus: Default::default(),
-            show_empty: Default::default(),
-            empty_str: Cow::Borrowed(" \u{2205} "),
             _phantom: Default::default(),
         }
     }
@@ -296,10 +289,6 @@ impl<'a, T, Selection> TableCore<'a, T, Selection> {
         if styles.focus_style.is_some() {
             self.focus_style = styles.focus_style;
         }
-        self.show_empty = styles.show_empty;
-        if let Some(empty_str) = styles.empty_str {
-            self.empty_str = empty_str;
-        }
         self
     }
 
@@ -408,19 +397,6 @@ impl<'a, T, Selection> TableCore<'a, T, Selection> {
     #[inline]
     pub fn focus_style(mut self, focus_style: Option<Style>) -> Self {
         self.focus_style = focus_style;
-        self
-    }
-
-    /// Show an indicator if the table is empty.
-    #[inline]
-    pub fn show_empty(mut self, show: bool) -> Self {
-        self.show_empty = show;
-        self
-    }
-
-    #[inline]
-    pub fn show_empty_str(mut self, str: impl Into<Cow<'a, str>>) -> Self {
-        self.empty_str = str.into();
         self
     }
 
@@ -845,18 +821,6 @@ pub fn render_table<'a, T, Selection: TableSelection>(
                 .hscroll
                 .set_max_offset(width.saturating_sub(state.table_area.width) as usize);
         }
-    }
-
-    if state.rows == 0 && widget.show_empty && !state.inner.is_empty() {
-        let area = Rect::new(state.table_area.x, state.table_area.y, 3, 1);
-        let style = if state.focus.is_focused() {
-            widget.focus_style.unwrap_or_default()
-        } else {
-            widget.style
-        };
-        Span::from(widget.empty_str.as_ref())
-            .style(style)
-            .render(area, buf);
     }
 
     // render only the scrollbars.
