@@ -38,12 +38,14 @@ pub struct RenderContext<'a> {
     pub non_exhaustive: NonExhaustive,
 }
 
-/// Return value for [RenderTableRow::render_row].
+/// Return value for the row-rendering closure.
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub enum Cells {
-    /// Skip rendering individual cells.
-    Skip,
-    /// Render the individual cells.
+    /// Render the individual cells too.
+    #[default]
     Render,
     /// Render the individual cells but don't draw the background.
     NoBackground,
+    /// Skip rendering individual cells.
+    Skip,
 }
