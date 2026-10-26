@@ -39,20 +39,20 @@ pub trait TableEditorState<T>: HasFocus {
     /// Error type.
     type Err;
 
-    /// Create a fresh value with all the defaults.
+    /// Create a fresh row value with all the defaults.
     fn create_value<'a>(&self, ctx: &'a Self::Context<'a>) -> Result<T, Self::Err>;
 
-    /// Set the current value for the editor.
+    /// Set the current row value for the editor.
     fn set_value<'a>(&mut self, value: T, ctx: &'a Self::Context<'a>) -> Result<(), Self::Err>;
 
-    /// Return the current value from the editor.
+    /// Return the current row value from the editor.
     fn value<'a>(&mut self, ctx: &'a Self::Context<'a>) -> Result<Option<T>, Self::Err>;
 
     /// Returns the currently focused column.
     /// Used to scroll the column to fully visible.
     fn focused_col(&self) -> Option<usize>;
 
-    /// Allows setting the focus for the editor.
+    /// Allows setting the focused column inside the editor.
     fn set_focused_col(&self, col: usize);
 }
 

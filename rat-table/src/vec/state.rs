@@ -132,11 +132,7 @@ impl<T, Selection: TableSelection> TableVecState<T, Selection> {
         self.core.rows_changed(self.data.len());
     }
 
-    /// Get the edit data.
-    ///
-    /// This will not contain the data of the currently
-    /// editing row. Instead, it will contain the value
-    /// before the edit started.
+    /// Get the table data.
     #[inline]
     pub fn value(&self) -> &Vec<T> {
         &self.data

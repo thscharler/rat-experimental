@@ -9,6 +9,8 @@ macro_rules! derive_table_widget {
         /// For very long list this can be noticeably slow.
         /// If you set this flag the number of rows will be set to
         /// usize::MAX instead.
+        ///
+        /// Usually it's ok to leave this on.
         #[inline]
         pub fn no_row_count(mut self, no_row_count: bool) -> Self {
             self.core = self.core.no_row_count(no_row_count);
@@ -26,6 +28,7 @@ macro_rules! derive_table_widget {
         }
 
         /// Render the full row-area.
+        /// The render closure returns a [Cells](crate::Cells).
         #[inline]
         pub fn render_row(
             mut self,
