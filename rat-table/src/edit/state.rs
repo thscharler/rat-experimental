@@ -124,6 +124,12 @@ impl<T, E> TableEditVecState<T, E> {
             non_exhaustive: NonExhaustive,
         }
     }
+
+    /// Populate the table-data.
+    pub fn with(mut self, data: impl IntoIterator<Item = T>) -> Self {
+        self.data.extend(data.into_iter());
+        self
+    }
 }
 
 impl<T, E> TableEditVecState<T, E> {
