@@ -52,7 +52,6 @@ where
             if let Some(row) = state.core.selected() {
                 // but it might be out of view
                 if let Some((row_area, cell_areas)) = state.core.row_cells(row) {
-                    clear_buf_area(row_area, buf);
                     self.editor
                         .render(row_area, &cell_areas, buf, &mut state.editor);
                 }
