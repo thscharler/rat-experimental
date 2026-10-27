@@ -52,8 +52,14 @@ pub trait TableEditorState<T> {
     /// Used to scroll the column to fully visible.
     fn focused_col(&self) -> Option<usize>;
 
-    /// Allows setting the focused column inside the editor.
-    fn set_focused_col(&self, col: usize);
+    /// Start editing the current value.
+    /// If a specific column should be focused initially it is given as
+    /// the column index.
+    fn start(&mut self, col: Option<usize>);
+
+    /// Stop editing the current value.
+    /// If necessary the editor can do some cleanup here.
+    fn stop(&mut self);
 }
 
 /// Editing mode.

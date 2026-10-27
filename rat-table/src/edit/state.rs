@@ -213,14 +213,14 @@ where
         self.editor.set_value(value.clone(), ctx)?;
         self.data.insert(row, value);
         self.core.items_added(row, 1);
-        self._start(0, row, Mode::Insert);
+        self._start(None, row, Mode::Insert);
         Ok(())
     }
 
     /// Edit the item at the selected row.
     pub fn edit<'a>(
         &mut self,
-        col: usize,
+        col: Option<usize>,
         row: usize,
         ctx: &'a E::Context<'a>,
     ) -> Result<(), E::Err> {
@@ -235,16 +235,15 @@ where
         Ok(())
     }
 
-    fn _start(&mut self, col: usize, row: usize, mode: Mode) {
-        if self.core.focus.is_focused() {
-            // black magic
-            FocusBuilder::build_for(&self.editor).first();
-        }
-
+    fn _start(&mut self, col: Option<usize>, row: usize, mode: Mode) {
         self.mode = mode;
         self.core.move_to(row);
-        self.core.scroll_to_col(col);
-        self.editor.set_focused_col(col);
+        self.editor.start(col);
+        if let Some(col) = self.editor.focused_col() {
+            self.core.scroll_to_col(col);
+        } else {
+            self.core.scroll_to_col(0);
+        }
     }
 
     /// Cancel editing.
@@ -301,7 +300,7 @@ where
         self.commit(ctx)?;
         if row + 1 < self.data.len() {
             self.core.select(Some(row + 1));
-            self.edit(0, row + 1, ctx)?;
+            self.edit(None, row + 1, ctx)?;
         }
         Ok(())
     }
@@ -387,7 +386,7 @@ where
             event_flow!(match event {
                 ct_event!(mouse any for m) if self.mouse.doubleclick(self.core.table_area, m) => {
                     if let Some((col, row)) = self.core.cell_at_clicked((m.column, m.row)) {
-                        self.edit(col, row, ctx)?;
+                        self.edit(Some(col), row, ctx)?;
                         Outcome::Changed
                     } else {
                         Outcome::Continue
@@ -415,7 +414,7 @@ where
                     }
                     ct_event!(keycode press Enter) | ct_event!(keycode press F(2)) => {
                         if let Some(row) = self.core.selected_checked() {
-                            self.edit(0, row, ctx)?;
+                            self.edit(None, row, ctx)?;
                             Outcome::Changed
                         } else if self.core.rows() == 0 {
                             self.edit_new(0, ctx)?;
