@@ -1,6 +1,6 @@
 use crate::core::TableCore;
 use crate::derive::derive_table_widget;
-use crate::edit::{Mode, TableEditVecState, TableEditor};
+use crate::edit::{Mode, TableEditState, TableEditor};
 use crate::selection::row::RowSelection;
 use crate::util::clear_buf_area;
 use ratatui_core::buffer::Buffer;
@@ -13,7 +13,7 @@ use ratatui_core::widgets::StatefulWidget;
 ///
 /// It's parameterized with an `Editor` widget, that renders
 /// the input-widgets.
-pub struct TableEditVec<'a, T, E>
+pub struct TableEdit<'a, T, E>
 where
     E: TableEditor<T> + 'a,
 {
@@ -21,7 +21,7 @@ where
     editor: E,
 }
 
-impl<'a, T, E> TableEditVec<'a, T, E>
+impl<'a, T, E> TableEdit<'a, T, E>
 where
     E: TableEditor<T> + 'a,
 {
@@ -35,11 +35,11 @@ where
     derive_table_widget!();
 }
 
-impl<'a, T, E> StatefulWidget for TableEditVec<'a, T, E>
+impl<'a, T, E> StatefulWidget for TableEdit<'a, T, E>
 where
     E: TableEditor<T> + 'a,
 {
-    type State = TableEditVecState<T, E::State>;
+    type State = TableEditState<T, E::State>;
 
     #[allow(clippy::collapsible_else_if)]
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {

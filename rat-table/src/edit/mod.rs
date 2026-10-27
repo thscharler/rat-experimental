@@ -33,7 +33,7 @@ pub trait TableEditor<T> {
 ///
 /// Trait for the editor widget state
 ///
-pub trait TableEditorState<T>: HasFocus {
+pub trait TableEditorState<T> {
     /// Some external context.
     type Context<'a>;
     /// Error type.

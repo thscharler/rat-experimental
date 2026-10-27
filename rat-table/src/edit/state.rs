@@ -24,7 +24,7 @@ use ratatui_core::layout::Rect;
 /// Focus for all the widgets and navigates independently of
 /// the main application Focus.
 ///
-pub struct TableEditVecState<T, E> {
+pub struct TableEditState<T, E> {
     /// Editing mode.
     pub mode: Mode,
     /// Backing table.
@@ -39,7 +39,7 @@ pub struct TableEditVecState<T, E> {
     pub non_exhaustive: NonExhaustive,
 }
 
-impl<T, E> Default for TableEditVecState<T, E>
+impl<T, E> Default for TableEditState<T, E>
 where
     E: Default,
 {
@@ -55,7 +55,7 @@ where
     }
 }
 
-impl<T, E> HasFocus for TableEditVecState<T, E> {
+impl<T, E> HasFocus for TableEditState<T, E> {
     fn build(&self, builder: &mut FocusBuilder) {
         builder.leaf_widget(self);
     }
@@ -76,7 +76,7 @@ impl<T, E> HasFocus for TableEditVecState<T, E> {
     }
 }
 
-impl<T, E> HasScreenCursor for TableEditVecState<T, E>
+impl<T, E> HasScreenCursor for TableEditState<T, E>
 where
     E: HasScreenCursor,
 {
@@ -88,7 +88,7 @@ where
     }
 }
 
-impl<T, E> RelocatableState for TableEditVecState<T, E>
+impl<T, E> RelocatableState for TableEditState<T, E>
 where
     E: RelocatableState,
 {
@@ -102,7 +102,7 @@ where
     }
 }
 
-impl<T, E> TableEditVecState<T, E> {
+impl<T, E> TableEditState<T, E> {
     pub fn new(editor: E) -> Self {
         Self {
             mode: Mode::View,
@@ -132,27 +132,27 @@ impl<T, E> TableEditVecState<T, E> {
     }
 }
 
-impl<T, E> TableEditVecState<T, E> {
+impl<T, E> TableEditState<T, E> {
     derive_table_widget_state!(BASE);
 }
 
-impl<T, E> TableEditVecState<T, E> {
+impl<T, E> TableEditState<T, E> {
     derive_table_widget_state!(AREAS);
 }
 
-impl<T, E> TableEditVecState<T, E> {
+impl<T, E> TableEditState<T, E> {
     derive_table_widget_state!(OFFSET);
 }
 
-impl<T, E> TableEditVecState<T, E> {
+impl<T, E> TableEditState<T, E> {
     derive_table_widget_state!(SELECTION);
 }
 
-impl<T, E> TableEditVecState<T, E> {
+impl<T, E> TableEditState<T, E> {
     derive_table_widget_state!(ROWSELECTION);
 }
 
-impl<T, E> TableEditVecState<T, E>
+impl<T, E> TableEditState<T, E>
 where
     E: TableEditorState<T>,
     T: Clone,
@@ -313,7 +313,7 @@ where
 }
 
 impl<'a, T, S> HandleEvent<Event, &'a S::Context<'a>, Result<Outcome, S::Err>>
-    for TableEditVecState<T, S>
+    for TableEditState<T, S>
 where
     S: HandleEvent<Event, &'a S::Context<'a>, Result<Outcome, S::Err>>,
     S: TableEditorState<T>,
