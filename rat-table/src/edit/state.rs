@@ -61,11 +61,11 @@ impl<T, E> HasFocus for TableEditState<T, E> {
     }
 
     fn focus(&self) -> FocusFlag {
-        self.core.focus.focus()
+        self.core.focus.clone()
     }
 
     fn area(&self) -> Rect {
-        self.core.focus.area()
+        self.core.area
     }
 
     fn navigable(&self) -> Navigation {
