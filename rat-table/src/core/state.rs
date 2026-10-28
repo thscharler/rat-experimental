@@ -15,7 +15,7 @@ use ratatui_core::layout::Rect;
 use std::cmp::min;
 use std::collections::HashSet;
 
-/// State for the table-core.
+/// State for the core table.
 pub struct TableCoreState<Selection = RowSelection> {
     /// Current focus state.
     /// __read+write__
@@ -50,7 +50,7 @@ pub struct TableCoreState<Selection = RowSelection> {
     pub footer_area: Rect,
 
     /// Row count.
-    /// __read+write__ Renewed with each render anyway.
+    /// __read+write__ Renewed with each render.
     pub rows: usize,
     /// Column count.
     /// __read only__ Renewed with each render.
@@ -64,7 +64,8 @@ pub struct TableCoreState<Selection = RowSelection> {
     pub hscroll: ScrollState,
 
     /// Selection data.
-    /// __read+write__ selection model. selection is not bound by rows.
+    /// __read+write__ selection model.
+    /// selection is not bound by actual rows.
     pub selection: Selection,
 
     /// Helper for mouse interactions.
@@ -138,10 +139,12 @@ impl<Selection> TableCoreState<Selection>
 where
     Selection: Default,
 {
+    /// New widget.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// New named widget.
     pub fn named(name: &str) -> Self {
         Self {
             focus: FocusFlag::new().with_name(name),
@@ -259,7 +262,11 @@ impl<Selection: TableSelection> TableCoreState<Selection> {
         self.selection.clear();
     }
 
-    /// Update the state to match adding items.
+    /// Update the state to match adding items *during* event-handling.
+    /// A lot of functions use the number of rows, so when you change the
+    /// underlying data you might want to immediately reflect this in the
+    /// table-state.
+    ///
     /// This corrects the number of rows, offset and selection.
     pub fn items_added(&mut self, pos: usize, n: usize) {
         self.rows = self.rows.saturating_add(n);
@@ -267,7 +274,11 @@ impl<Selection: TableSelection> TableCoreState<Selection> {
         self.selection.items_added(pos, n);
     }
 
-    /// Update the state to match removing items.
+    /// Update the state to match removing items *during* event-handling.
+    /// A lot of functions use the number of rows, so when you change the
+    /// underlying data you might want to immediately reflect this in the
+    /// table-state.
+    ///
     /// This corrects the number of rows, offset and selection.
     pub fn items_removed(&mut self, pos: usize, n: usize) {
         self.rows = self.rows.saturating_sub(n);
@@ -275,13 +286,10 @@ impl<Selection: TableSelection> TableCoreState<Selection> {
         self.selection.items_removed(pos, n, self.rows);
     }
 
-    /// Update the number of rows.
-    /// This corrects the number of rows *during* event-handling.
-    /// A number of functions depend on the number of rows,
-    /// but this value is only updated during render.
-    ///
-    /// If you encounter such a case, manually changing the number of rows
-    /// will fix it.
+    /// Update the number of rows *during* event-handling.
+    /// A lot of functions use the number of rows, so when you change the
+    /// underlying data you might want to immediately reflect this in the
+    /// table-state.
     ///
     /// This corrects the number of rows, offset and selection.
     pub fn rows_changed(&mut self, rows: usize) {
@@ -312,9 +320,7 @@ impl<Selection: TableSelection> TableCoreState<Selection> {
     }
 
     /// Change the vertical offset.
-    ///
-    /// Due to overscroll it's possible that this is an invalid offset for the widget.
-    /// The widget must deal with this situation.
+    /// The vertical offset may be beyond the number of rows.
     ///
     /// The widget returns true if the offset changed at all.
     pub fn set_row_offset(&mut self, offset: usize) -> bool {
@@ -332,9 +338,7 @@ impl<Selection: TableSelection> TableCoreState<Selection> {
     }
 
     /// Maximum offset that is accessible with scrolling.
-    ///
-    /// This is shorter than the length of the content by whatever fills the last page.
-    /// This is the base for the scrollbar content_length.
+    /// This is the table-width minus the widget-width plus some overscroll.
     pub fn x_max_offset(&self) -> usize {
         self.hscroll.max_offset()
     }
@@ -345,9 +349,7 @@ impl<Selection: TableSelection> TableCoreState<Selection> {
     }
 
     /// Change the horizontal offset.
-    ///
-    /// Due to overscroll it's possible that this is an invalid offset for the widget.
-    /// The widget must deal with this situation.
+    /// The offset may be beyond the table-width.
     ///
     /// The widget returns true if the offset changed at all.
     pub fn set_x_offset(&mut self, offset: usize) -> bool {

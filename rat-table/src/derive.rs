@@ -397,9 +397,7 @@ macro_rules! derive_table_widget_state {
         }
 
         /// Change the vertical offset.
-        ///
-        /// Due to overscroll it's possible that this is an invalid offset for the widget.
-        /// The widget must deal with this situation.
+        /// The offset may be beyond the number of rows.
         ///
         /// The widget returns true if the offset changed at all.
         #[inline]
@@ -435,11 +433,9 @@ macro_rules! derive_table_widget_state {
         }
 
         /// Change the horizontal offset.
+        /// The offset may be beyond the table-width.
         ///
-        /// Due to overscroll it's possible that this is an invalid offset for the widget.
-        /// The widget must deal with this situation.
-        ///
-        /// The widget returns true if the offset changed at all.
+        /// Returns true if the offset changed at all.
         #[inline]
         pub fn set_x_offset(&mut self, offset: usize) -> bool {
             self.core.set_x_offset(offset)
@@ -736,27 +732,32 @@ macro_rules! derive_table_widget_state {
         }
     };
     (ITEMS) => {
-        /// Update the state to match adding items.
+        /// Update the state to match adding items *during* event-handling.
+        /// A lot of functions use the number of rows, so when you change the
+        /// underlying data you might want to immediately reflect this in the
+        /// table-state.
+        ///
         /// This corrects the number of rows, offset and selection.
         #[inline]
         pub fn items_added(&mut self, pos: usize, n: usize) {
             self.core.items_added(pos, n)
         }
 
-        /// Update the state to match removing items.
+        /// Update the state to match removing items *during* event-handling.
+        /// A lot of functions use the number of rows, so when you change the
+        /// underlying data you might want to immediately reflect this in the
+        /// table-state.
+        ///
         /// This corrects the number of rows, offset and selection.
         #[inline]
         pub fn items_removed(&mut self, pos: usize, n: usize) {
             self.core.items_removed(pos, n)
         }
 
-        /// Update the number of rows.
-        /// This corrects the number of rows *during* event-handling.
-        /// A number of functions depend on the number of rows,
-        /// but this value is only updated during render.
-        ///
-        /// If you encounter such a case, manually changing the number of rows
-        /// will fix it.
+        /// Update the number of rows *during* event-handling.
+        /// A lot of functions use the number of rows, so when you change the
+        /// underlying data you might want to immediately reflect this in the
+        /// table-state.
         ///
         /// This corrects the number of rows, offset and selection.
         #[inline]
