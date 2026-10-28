@@ -21,6 +21,7 @@ pub trait TableEditor<T> {
     type State: TableEditorState<T>;
 
     /// Standard render call, but with added areas for each cell.
+    /// The area is the area of the full row.
     fn render(
         &self, //
         area: Rect,
@@ -31,7 +32,7 @@ pub trait TableEditor<T> {
 }
 
 ///
-/// Trait for the editor widget state
+/// Trait for the editor widget state.
 ///
 pub trait TableEditorState<T> {
     /// Some external context.
@@ -46,6 +47,7 @@ pub trait TableEditorState<T> {
     fn set_value<'a>(&mut self, value: T, ctx: &'a Self::Context<'a>) -> Result<(), Self::Err>;
 
     /// Return the current row value from the editor.
+    /// None results will remove the table row.
     fn value<'a>(&mut self, ctx: &'a Self::Context<'a>) -> Result<Option<T>, Self::Err>;
 
     /// Returns the currently focused column.

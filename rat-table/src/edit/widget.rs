@@ -13,6 +13,9 @@ use ratatui_core::widgets::StatefulWidget;
 ///
 /// It's parameterized with an `Editor` widget, that renders
 /// the input-widgets.
+///
+/// See `examples/table_edit.rs`.
+///
 pub struct TableEdit<'a, T, E>
 where
     E: TableEditor<T> + 'a,

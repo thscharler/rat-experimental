@@ -11,18 +11,20 @@ use rat_focus::{FocusBuilder, FocusFlag, HasFocus, Navigation};
 use rat_reloc::RelocatableState;
 use ratatui_core::layout::Rect;
 
-/// State for [TableEditVec][crate::TableEditVec].
+/// State for [TableEdit][crate::TableEdit].
 ///
 /// It has a mode-field for insert/edit/view.
 ///
 /// __Focus__
 ///
-/// When editing the widgets blocks the Focus it is part of.
+/// When editing the widget blocks the Focus it is part of.
 /// You can't leave the table as long as it's editing.
 ///
 /// It is intended that the editor-widget sets up a separate
 /// Focus for all the widgets and navigates independently of
 /// the main application Focus.
+///
+///
 ///
 pub struct TableEditState<T, E> {
     /// Editing mode.
@@ -157,13 +159,13 @@ where
     E: TableEditorState<T>,
     T: Clone,
 {
-    /// Set the edit data.
+    /// Set the data.
     pub fn set_value(&mut self, data: Vec<T>) {
         self.data = data;
         self.core.rows_changed(self.data.len());
     }
 
-    /// Get the edit data.
+    /// Get the data.
     ///
     /// This will not contain the data of the currently
     /// editing row. Instead, it will contain the value
@@ -217,7 +219,8 @@ where
         Ok(())
     }
 
-    /// Edit the item at the selected row.
+    /// Edit the item at the given row.
+    /// A starting column can be provided too.
     pub fn edit<'a>(
         &mut self,
         col: Option<usize>,
@@ -252,6 +255,7 @@ where
     pub fn cancel(&mut self) {
         if self.mode == Mode::View {
             return;
+    /// When inserting a new row, the row will be removed.
         }
         let Some(row) = self.core.selected_checked() else {
             return;
@@ -284,6 +288,9 @@ where
         Ok(())
     }
 
+    /// Commit the current changes and start editing
+    /// the next row. If the end of the table is reached
+    /// a row will be appended.
     pub fn commit_and_append<'a>(&mut self, ctx: &'a E::Context<'a>) -> Result<(), E::Err> {
         self.commit(ctx)?;
         if let Some(row) = self.core.selected_checked() {
@@ -292,6 +299,9 @@ where
         Ok(())
     }
 
+    /// Commit the current changes and start editing
+    /// the next row. Does not append at the end of the
+    /// table.
     pub fn commit_and_edit<'a>(&mut self, ctx: &'a E::Context<'a>) -> Result<(), E::Err> {
         let Some(row) = self.core.selected_checked() else {
             return Ok(());
