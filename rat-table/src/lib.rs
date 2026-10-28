@@ -11,7 +11,7 @@ mod table;
 mod util;
 mod vec;
 
-pub use edit::{Mode, TableEdit, TableEditState, TableEditor, TableEditorState};
+pub use edit::{EditMode, TableEdit, TableEditState, TableEditor, TableEditorState};
 pub use render::{Cells, RenderContext};
 pub use style::TableStyle;
 pub use table::{Table, TableState};

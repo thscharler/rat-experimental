@@ -2,7 +2,6 @@
 //! Table-widget and row-editor.
 //!
 
-use rat_focus::HasFocus;
 use ratatui_core::buffer::Buffer;
 use ratatui_core::layout::Rect;
 
@@ -34,6 +33,7 @@ pub trait TableEditor<T> {
 ///
 /// Trait for the editor widget state.
 ///
+#[allow(unused_variables)]
 pub trait TableEditorState<T> {
     /// Some external context.
     type Context<'a>;
@@ -52,21 +52,31 @@ pub trait TableEditorState<T> {
 
     /// Returns the currently focused column.
     /// Used to scroll the column to fully visible.
-    fn focused_col(&self) -> Option<usize>;
+    fn focused_col(&self) -> Option<usize> {
+        None
+    }
 
     /// Start editing the current value.
     /// If a specific column should be focused initially it is given as
     /// the column index.
-    fn start(&mut self, col: Option<usize>);
+    fn start<'a>(
+        &mut self,
+        col: Option<usize>,
+        ctx: &'a Self::Context<'a>,
+    ) -> Result<(), Self::Err> {
+        Ok(())
+    }
 
     /// Stop editing the current value.
     /// If necessary the editor can do some cleanup here.
-    fn stop(&mut self);
+    fn stop<'a>(&mut self, ctx: &'a Self::Context<'a>) -> Result<(), Self::Err> {
+        Ok(())
+    }
 }
 
 /// Editing mode.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Mode {
+pub enum EditMode {
     #[default]
     View,
     Edit,

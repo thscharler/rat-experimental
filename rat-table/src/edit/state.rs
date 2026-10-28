@@ -1,7 +1,7 @@
 use crate::_private::NonExhaustive;
 use crate::core::TableCoreState;
 use crate::derive::derive_table_widget_state;
-use crate::edit::{Mode, TableEditorState};
+use crate::edit::{EditMode, TableEditorState};
 use crate::selection::row::RowSelection;
 use rat_cursor::HasScreenCursor;
 use rat_event::crossterm::event::Event;
@@ -28,7 +28,7 @@ use ratatui_core::layout::Rect;
 ///
 pub struct TableEditState<T, E> {
     /// Editing mode.
-    pub mode: Mode,
+    pub mode: EditMode,
     /// Backing table.
     pub core: TableCoreState<RowSelection>,
     /// Editor
@@ -72,8 +72,8 @@ impl<T, E> HasFocus for TableEditState<T, E> {
 
     fn navigable(&self) -> Navigation {
         match self.mode {
-            Mode::View => self.core.focus.navigable(),
-            Mode::Edit | Mode::Insert => Navigation::Lock,
+            EditMode::View => self.core.focus.navigable(),
+            EditMode::Edit | EditMode::Insert => Navigation::Lock,
         }
     }
 }
@@ -84,8 +84,8 @@ where
 {
     fn screen_cursor(&self) -> Option<(u16, u16)> {
         match self.mode {
-            Mode::View => None,
-            Mode::Edit | Mode::Insert => self.editor.screen_cursor(),
+            EditMode::View => None,
+            EditMode::Edit | EditMode::Insert => self.editor.screen_cursor(),
         }
     }
 }
@@ -96,8 +96,8 @@ where
 {
     fn relocate(&mut self, shift: (i16, i16), clip: Rect) {
         match self.mode {
-            Mode::View => {}
-            Mode::Edit | Mode::Insert => {
+            EditMode::View => {}
+            EditMode::Edit | EditMode::Insert => {
                 self.editor.relocate(shift, clip);
             }
         }
@@ -107,7 +107,7 @@ where
 impl<T, E> TableEditState<T, E> {
     pub fn new(editor: E) -> Self {
         Self {
-            mode: Mode::View,
+            mode: EditMode::View,
             core: Default::default(),
             editor,
             data: Default::default(),
@@ -118,7 +118,7 @@ impl<T, E> TableEditState<T, E> {
 
     pub fn named(name: &str, editor: E) -> Self {
         Self {
-            mode: Mode::View,
+            mode: EditMode::View,
             core: TableCoreState::named(name),
             editor,
             data: Default::default(),
@@ -176,7 +176,7 @@ where
 
     /// Clear the widget.
     pub fn clear(&mut self) {
-        self.mode = Mode::View;
+        self.mode = EditMode::View;
         self.core.clear_offset();
         self.core.clear_selection();
         self.data.clear();
@@ -184,17 +184,17 @@ where
 
     /// Editing is active?
     pub fn is_editing(&self) -> bool {
-        self.mode == Mode::Edit || self.mode == Mode::Insert
+        self.mode == EditMode::Edit || self.mode == EditMode::Insert
     }
 
     /// Is the current edit an insert?
     pub fn is_insert(&self) -> bool {
-        self.mode == Mode::Insert
+        self.mode == EditMode::Insert
     }
 
-    /// Remove the item at the selected row.
+    /// Remove the item at the given row.
     pub fn remove(&mut self, row: usize) {
-        if self.mode != Mode::View {
+        if self.mode != EditMode::View {
             return;
         }
         if row < self.data.len() {
@@ -208,14 +208,17 @@ where
 
     /// Edit a new item inserted at the selected row.
     pub fn edit_new<'a>(&mut self, row: usize, ctx: &'a E::Context<'a>) -> Result<(), E::Err> {
-        if self.mode != Mode::View {
+        if self.mode != EditMode::View {
             return Ok(());
         }
+
         let value = self.editor.create_value(ctx)?;
         self.editor.set_value(value.clone(), ctx)?;
+        self._start(None, row, EditMode::Insert, ctx)?;
+
         self.data.insert(row, value);
         self.core.items_added(row, 1);
-        self._start(None, row, Mode::Insert);
+
         Ok(())
     }
 
@@ -227,64 +230,56 @@ where
         row: usize,
         ctx: &'a E::Context<'a>,
     ) -> Result<(), E::Err> {
-        if self.mode != Mode::View {
+        if self.mode != EditMode::View {
             return Ok(());
         }
-        {
-            let value = &self.data[row];
-            self.editor.set_value(value.clone(), ctx)?;
-        }
-        self._start(col, row, Mode::Edit);
+
+        let value = &self.data[row];
+        self.editor.set_value(value.clone(), ctx)?;
+        self._start(col, row, EditMode::Edit, ctx)?;
+
         Ok(())
     }
 
-    fn _start(&mut self, col: Option<usize>, row: usize, mode: Mode) {
-        self.mode = mode;
-        self.core.move_to(row);
-        self.editor.start(col);
-        if let Some(col) = self.editor.focused_col() {
-            self.core.scroll_to_col(col);
-        } else {
-            self.core.scroll_to_col(0);
-        }
-    }
-
     /// Cancel editing.
-    ///
-    /// Updates the state to remove the edited row.
-    pub fn cancel(&mut self) {
-        if self.mode == Mode::View {
-            return;
     /// When inserting a new row, the row will be removed.
+    pub fn cancel<'a>(&mut self, ctx: &'a E::Context<'a>) -> Result<(), E::Err> {
+        if self.mode == EditMode::View {
+            return Ok(());
         }
         let Some(row) = self.core.selected_checked() else {
-            return;
+            return Ok(());
         };
-        if self.mode == Mode::Insert {
+
+        self._stop(ctx)?;
+
+        if self.mode == EditMode::Insert {
             self.data.remove(row);
             self.core.items_removed(row, 1);
         }
-        self._stop();
+
+        Ok(())
     }
 
     /// Commit the changes in the editor.
     pub fn commit<'a>(&mut self, ctx: &'a E::Context<'a>) -> Result<(), E::Err> {
-        if self.mode == Mode::View {
+        if self.mode == EditMode::View {
             return Ok(());
         }
         let Some(row) = self.core.selected_checked() else {
             return Ok(());
         };
-        {
-            let value = self.editor.value(ctx)?;
-            if let Some(value) = value {
-                self.data[row] = value;
-            } else {
-                self.data.remove(row);
-                self.core.items_removed(row, 1);
-            }
+
+        self._stop(ctx)?;
+
+        let value = self.editor.value(ctx)?;
+        if let Some(value) = value {
+            self.data[row] = value;
+        } else {
+            self.data.remove(row);
+            self.core.items_removed(row, 1);
         }
-        self._stop();
+
         Ok(())
     }
 
@@ -315,9 +310,29 @@ where
         Ok(())
     }
 
-    fn _stop(&mut self) {
-        self.mode = Mode::View;
+    fn _start<'a>(
+        &mut self,
+        col: Option<usize>,
+        row: usize,
+        mode: EditMode,
+        ctx: &'a E::Context<'a>,
+    ) -> Result<(), E::Err> {
+        self.mode = mode;
+        self.core.move_to(row);
+        self.editor.start(col, ctx)?;
+        if let Some(col) = self.editor.focused_col() {
+            self.core.scroll_to_col(col);
+        } else {
+            self.core.scroll_to_col(0);
+        }
+        Ok(())
+    }
+
+    fn _stop<'a>(&mut self, ctx: &'a E::Context<'a>) -> Result<(), E::Err> {
+        self.mode = EditMode::View;
+        self.editor.stop(ctx)?;
         self.core.scroll_to_col(0);
+        Ok(())
     }
 }
 
@@ -330,7 +345,7 @@ where
 {
     #[allow(clippy::collapsible_if)]
     fn handle(&mut self, event: &Event, ctx: &'a S::Context<'a>) -> Result<Outcome, S::Err> {
-        if self.mode == Mode::Edit || self.mode == Mode::Insert {
+        if self.mode == EditMode::Edit || self.mode == EditMode::Insert {
             if self.is_focused() {
                 event_flow!({
                     let r = self.editor.handle(event, ctx)?;
@@ -347,7 +362,7 @@ where
 
                 event_flow!(match event {
                     ct_event!(keycode press Esc) => {
-                        self.cancel();
+                        self.cancel(ctx)?;
                         Outcome::Changed
                     }
                     ct_event!(keycode press Enter) => {
@@ -366,7 +381,7 @@ where
                         } else if let Some(row) = self.core.selected_checked()
                             && row > 0
                         {
-                            self.core.select(Some(row));
+                            self.core.select(Some(row - 1));
                         }
                         Outcome::Changed
                     }
