@@ -3,9 +3,9 @@
 //!
 
 use crate::data::SMALL_DATA;
-use crate::data::render_tablestate::render_tablestate_row;
 use crate::mini_salsa::mock_init;
 use crate::mini_salsa::{MiniSalsaState, run_ui, setup_logging};
+use crate::widget::render_tablestate::render_tablestate_row;
 use format_num_pattern::NumberFormat;
 use rat_event::{HandleEvent, Regular, event_flow};
 use rat_focus::HasFocus;
@@ -22,10 +22,10 @@ use ratatui_core::widgets::{StatefulWidget, Widget};
 use ratatui_crossterm::crossterm::event::Event;
 use ratatui_widgets::block::Block;
 use ratatui_widgets::borders::BorderType;
-use std::cell::RefCell;
 
 mod data;
 mod mini_salsa;
+mod widget;
 
 fn main() -> Result<(), anyhow::Error> {
     setup_logging()?;

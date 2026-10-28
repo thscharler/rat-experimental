@@ -1,5 +1,6 @@
 #![allow(unreachable_pub)]
 
+pub mod render_tablestate;
 pub mod textinputf;
 
 mod _private {

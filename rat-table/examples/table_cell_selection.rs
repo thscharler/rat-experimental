@@ -15,7 +15,6 @@ use rat_theme4::{RatWidgetColor, StyleName};
 use ratatui_core::buffer::Buffer;
 use ratatui_core::layout::{Constraint, Flex, Layout, Rect};
 use ratatui_core::style::{Color, Style};
-use ratatui_core::text::Span;
 use ratatui_core::widgets::{StatefulWidget, Widget};
 use ratatui_crossterm::crossterm::event::Event;
 use ratatui_widgets::block::Block;

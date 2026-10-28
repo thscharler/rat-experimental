@@ -3,9 +3,9 @@
 //! More to test things than an example.
 //!
 
-use crate::data::render_tablestate::render_tablestate;
 use crate::mini_salsa::mock_init;
 use crate::mini_salsa::{MiniSalsaState, layout_grid, run_ui, setup_logging};
+use crate::widget::render_tablestate::render_tablestate;
 use format_num_pattern::NumberFormat;
 use rat_event::util::item_at;
 use rat_event::{HandleEvent, Regular, ct_event, event_flow};
@@ -33,6 +33,7 @@ const GREATER: usize = 110;
 
 mod data;
 mod mini_salsa;
+mod widget;
 
 fn main() -> Result<(), anyhow::Error> {
     setup_logging()?;

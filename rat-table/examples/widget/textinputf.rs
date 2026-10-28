@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use crate::widget::_private::NonExhaustive;
+use rat_cursor::HasScreenCursor;
 use rat_event::{HandleEvent, MouseOnly, Outcome, Regular};
 use rat_focus::{FocusBuilder, FocusFlag, HasFocus};
 use ratatui_core::buffer::Buffer;
@@ -82,8 +83,10 @@ impl TextInputFState {
             non_exhaustive: NonExhaustive,
         }
     }
+}
 
-    pub fn screen_cursor(&self) -> Option<(u16, u16)> {
+impl HasScreenCursor for TextInputFState {
+    fn screen_cursor(&self) -> Option<(u16, u16)> {
         if self.is_focused() {
             Some((self.area.x, self.area.y))
         } else {

@@ -2,9 +2,9 @@
 //! Table with horizontal scrolling
 //!
 
-use crate::data::render_tablestate::render_tablestate;
 use crate::mini_salsa::mock_init;
 use crate::mini_salsa::{MiniSalsaState, run_ui, setup_logging};
+use crate::widget::render_tablestate::render_tablestate;
 use format_num_pattern::NumberFormat;
 use rat_event::{HandleEvent, Regular, event_flow};
 use rat_focus::HasFocus;
@@ -24,6 +24,7 @@ use ratatui_widgets::borders::BorderType;
 
 mod data;
 mod mini_salsa;
+mod widget;
 
 fn main() -> Result<(), anyhow::Error> {
     setup_logging()?;

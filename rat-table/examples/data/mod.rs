@@ -1,8 +1,6 @@
 #![allow(dead_code)]
 #![allow(unreachable_pub)]
 
-pub mod render_tablestate;
-
 pub static SMALL_DATA: [&str; 100] = [
     "Lorem",
     "ipsum",
