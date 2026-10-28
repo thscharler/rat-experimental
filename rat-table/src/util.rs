@@ -3,17 +3,6 @@ use ratatui_core::layout::Rect;
 use ratatui_core::style::Style;
 use std::mem;
 
-/// Clear an area of the buffer.
-pub(crate) fn clear_buf_area(area: Rect, buf: &mut Buffer) {
-    for y in area.top()..area.bottom() {
-        for x in area.left()..area.right() {
-            if let Some(cell) = buf.cell_mut((x, y)) {
-                cell.set_symbol(" ");
-            }
-        }
-    }
-}
-
 pub(crate) fn revert_style(mut style: Style) -> Style {
     if style.fg.is_some() && style.bg.is_some() {
         mem::swap(&mut style.fg, &mut style.bg);
