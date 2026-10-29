@@ -385,6 +385,8 @@ impl<Selection: TableSelection> TableCoreState<Selection> {
     pub fn scroll_to_row(&mut self, pos: usize) -> bool {
         if pos >= self.rows {
             false
+        } else if self.page_len() == 0 {
+            self.set_row_offset(pos)
         } else if pos == self.row_offset().saturating_add(self.page_len()) {
             // the page might not fill the full area.
             let heights = self.row_areas.iter().map(|v| v.height).sum::<u16>();
@@ -405,13 +407,8 @@ impl<Selection: TableSelection> TableCoreState<Selection> {
     /// Ensures that the given column is completely visible.
     pub fn scroll_to_col(&mut self, pos: usize) -> bool {
         if let Some(col) = self.column_layout.get(pos) {
-            if (col.left() as usize) < self.x_offset() {
-                self.set_x_offset(col.x as usize)
-            } else if (col.right() as usize) >= self.x_offset().saturating_add(self.page_width()) {
-                self.set_x_offset((col.right() as usize).saturating_sub(self.page_width()))
-            } else {
-                false
-            }
+            self.hscroll
+                .scroll_to_range(col.x as usize..col.right() as usize)
         } else {
             false
         }
@@ -419,13 +416,7 @@ impl<Selection: TableSelection> TableCoreState<Selection> {
 
     /// Ensures that the given position is visible.
     pub fn scroll_to_x(&mut self, pos: usize) -> bool {
-        if pos >= self.x_offset().saturating_add(self.page_width()) {
-            self.set_x_offset(pos.saturating_sub(self.page_width()).saturating_add(1))
-        } else if pos < self.x_offset() {
-            self.set_x_offset(pos)
-        } else {
-            false
-        }
+        self.hscroll.scroll_to_pos(pos)
     }
 
     /// Reduce the row-offset by n.
