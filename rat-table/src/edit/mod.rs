@@ -76,7 +76,7 @@ pub trait TableEditorState<T> {
 
 /// Editing mode.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
-pub enum EditMode {
+pub enum Mode {
     #[default]
     View,
     Edit,

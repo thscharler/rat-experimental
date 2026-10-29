@@ -1,6 +1,6 @@
 use crate::core::TableCore;
 use crate::derive::derive_table_widget;
-use crate::edit::{EditMode, TableEditState, TableEditor};
+use crate::edit::{Mode, TableEditState, TableEditor};
 use crate::selection::row::RowSelection;
 use ratatui_core::buffer::Buffer;
 use ratatui_core::layout::Rect;
@@ -50,7 +50,7 @@ where
 
         self.core.render(data, area, buf, &mut state.core);
 
-        if state.mode == EditMode::Insert || state.mode == EditMode::Edit {
+        if state.mode == Mode::Insert || state.mode == Mode::Edit {
             if let Some(row) = state.core.selected() {
                 // but it might be out of view
                 if let Some((row_area, cell_areas)) = state.core.row_cells(row) {

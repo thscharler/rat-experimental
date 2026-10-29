@@ -1,7 +1,7 @@
 use crate::_private::NonExhaustive;
 use crate::core::TableCoreState;
 use crate::derive::derive_table_widget_state;
-use crate::edit::{EditMode, TableEditorState};
+use crate::edit::{Mode, TableEditorState};
 use crate::selection::row::RowSelection;
 use rat_cursor::HasScreenCursor;
 use rat_event::crossterm::event::Event;
@@ -28,7 +28,7 @@ use ratatui_core::layout::Rect;
 ///
 pub struct TableEditState<T, E> {
     /// Editing mode.
-    pub mode: EditMode,
+    pub mode: Mode,
     /// Backing table.
     pub core: TableCoreState<RowSelection>,
     /// Editor
@@ -72,8 +72,8 @@ impl<T, E> HasFocus for TableEditState<T, E> {
 
     fn navigable(&self) -> Navigation {
         match self.mode {
-            EditMode::View => self.core.focus.navigable(),
-            EditMode::Edit | EditMode::Insert => Navigation::Lock,
+            Mode::View => self.core.focus.navigable(),
+            Mode::Edit | Mode::Insert => Navigation::Lock,
         }
     }
 }
@@ -84,8 +84,8 @@ where
 {
     fn screen_cursor(&self) -> Option<(u16, u16)> {
         match self.mode {
-            EditMode::View => None,
-            EditMode::Edit | EditMode::Insert => self.editor.screen_cursor(),
+            Mode::View => None,
+            Mode::Edit | Mode::Insert => self.editor.screen_cursor(),
         }
     }
 }
@@ -96,8 +96,8 @@ where
 {
     fn relocate(&mut self, shift: (i16, i16), clip: Rect) {
         match self.mode {
-            EditMode::View => {}
-            EditMode::Edit | EditMode::Insert => {
+            Mode::View => {}
+            Mode::Edit | Mode::Insert => {
                 self.editor.relocate(shift, clip);
             }
         }
@@ -107,7 +107,7 @@ where
 impl<T, E> TableEditState<T, E> {
     pub fn new(editor: E) -> Self {
         Self {
-            mode: EditMode::View,
+            mode: Mode::View,
             core: Default::default(),
             editor,
             data: Default::default(),
@@ -118,7 +118,7 @@ impl<T, E> TableEditState<T, E> {
 
     pub fn named(name: &str, editor: E) -> Self {
         Self {
-            mode: EditMode::View,
+            mode: Mode::View,
             core: TableCoreState::named(name),
             editor,
             data: Default::default(),
@@ -176,7 +176,7 @@ where
 
     /// Clear the widget.
     pub fn clear(&mut self) {
-        self.mode = EditMode::View;
+        self.mode = Mode::View;
         self.core.clear_offset();
         self.core.clear_selection();
         self.data.clear();
@@ -184,17 +184,17 @@ where
 
     /// Editing is active?
     pub fn is_editing(&self) -> bool {
-        self.mode == EditMode::Edit || self.mode == EditMode::Insert
+        self.mode == Mode::Edit || self.mode == Mode::Insert
     }
 
     /// Is the current edit an insert?
     pub fn is_insert(&self) -> bool {
-        self.mode == EditMode::Insert
+        self.mode == Mode::Insert
     }
 
     /// Remove the item at the given row.
     pub fn remove(&mut self, row: usize) {
-        if self.mode != EditMode::View {
+        if self.mode != Mode::View {
             return;
         }
         if row < self.data.len() {
@@ -208,13 +208,13 @@ where
 
     /// Edit a new item inserted at the selected row.
     pub fn edit_new<'a>(&mut self, row: usize, ctx: &'a E::Context<'a>) -> Result<(), E::Err> {
-        if self.mode != EditMode::View {
+        if self.mode != Mode::View {
             return Ok(());
         }
 
         let value = self.editor.create_value(ctx)?;
         self.editor.set_value(value.clone(), ctx)?;
-        self._start(None, row, EditMode::Insert, ctx)?;
+        self._start(None, row, Mode::Insert, ctx)?;
 
         self.data.insert(row, value);
         self.core.items_added(row, 1);
@@ -230,13 +230,13 @@ where
         row: usize,
         ctx: &'a E::Context<'a>,
     ) -> Result<(), E::Err> {
-        if self.mode != EditMode::View {
+        if self.mode != Mode::View {
             return Ok(());
         }
 
         let value = &self.data[row];
         self.editor.set_value(value.clone(), ctx)?;
-        self._start(col, row, EditMode::Edit, ctx)?;
+        self._start(col, row, Mode::Edit, ctx)?;
 
         Ok(())
     }
@@ -244,7 +244,7 @@ where
     /// Cancel editing.
     /// When inserting a new row, the row will be removed.
     pub fn cancel<'a>(&mut self, ctx: &'a E::Context<'a>) -> Result<(), E::Err> {
-        if self.mode == EditMode::View {
+        if self.mode == Mode::View {
             return Ok(());
         }
         let Some(row) = self.core.selected_checked() else {
@@ -253,7 +253,7 @@ where
 
         self._stop(ctx)?;
 
-        if self.mode == EditMode::Insert {
+        if self.mode == Mode::Insert {
             self.data.remove(row);
             self.core.items_removed(row, 1);
         }
@@ -263,7 +263,7 @@ where
 
     /// Commit the changes in the editor.
     pub fn commit<'a>(&mut self, ctx: &'a E::Context<'a>) -> Result<(), E::Err> {
-        if self.mode == EditMode::View {
+        if self.mode == Mode::View {
             return Ok(());
         }
         let Some(row) = self.core.selected_checked() else {
@@ -314,7 +314,7 @@ where
         &mut self,
         col: Option<usize>,
         row: usize,
-        mode: EditMode,
+        mode: Mode,
         ctx: &'a E::Context<'a>,
     ) -> Result<(), E::Err> {
         self.mode = mode;
@@ -329,7 +329,7 @@ where
     }
 
     fn _stop<'a>(&mut self, ctx: &'a E::Context<'a>) -> Result<(), E::Err> {
-        self.mode = EditMode::View;
+        self.mode = Mode::View;
         self.editor.stop(ctx)?;
         self.core.scroll_to_col(0);
         Ok(())
@@ -345,7 +345,7 @@ where
 {
     #[allow(clippy::collapsible_if)]
     fn handle(&mut self, event: &Event, ctx: &'a S::Context<'a>) -> Result<Outcome, S::Err> {
-        if self.mode == EditMode::Edit || self.mode == EditMode::Insert {
+        if self.mode == Mode::Edit || self.mode == Mode::Insert {
             if self.is_focused() {
                 event_flow!({
                     let r = self.editor.handle(event, ctx)?;
