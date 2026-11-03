@@ -734,7 +734,7 @@ impl TableCoreState<CellSelection> {
 impl<Selection> HandleEvent<Event, DoubleClick, DoubleClickOutcome> for TableCoreState<Selection> {
     /// Handles double-click events on the table.
     fn handle(&mut self, event: &Event, _keymap: DoubleClick) -> DoubleClickOutcome {
-        if !self.focus.has_mouse_focus() {
+        if self.focus.is_obscured() {
             return DoubleClickOutcome::Continue;
         }
 

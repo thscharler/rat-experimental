@@ -285,7 +285,7 @@ impl HandleEvent<Event, Regular, TableOutcome> for TableCoreState<CellSelection>
 
 impl HandleEvent<Event, MouseOnly, TableOutcome> for TableCoreState<CellSelection> {
     fn handle(&mut self, event: &Event, _keymap: MouseOnly) -> TableOutcome {
-        if !self.focus.has_mouse_focus() {
+        if self.focus.is_obscured() {
             return TableOutcome::Continue;
         }
 
