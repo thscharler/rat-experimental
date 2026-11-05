@@ -36,7 +36,7 @@ fn main() -> Result<(), anyhow::Error> {
         })),
     };
 
-    run_ui("slice", mock_init, event, render, &mut state)
+    run_ui("vec", mock_init, event, render, &mut state)
 }
 
 struct Sample {

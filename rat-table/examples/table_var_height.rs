@@ -40,7 +40,7 @@ fn main() -> Result<(), anyhow::Error> {
                 check: rand::random(),
                 row_height: rand::random::<u16>() % 3 + 1,
             })
-            .take(1000)
+            .take(100_000)
             .collect(),
         table: Default::default(),
     };
