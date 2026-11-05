@@ -45,6 +45,7 @@ pub enum Cells {
     #[default]
     Render,
     /// Render the individual cells but don't draw the background.
+    // todo: remove. replace all this by a bool
     NoBackground,
     /// Skip rendering individual cells.
     Skip,

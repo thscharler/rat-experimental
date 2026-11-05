@@ -37,6 +37,12 @@ pub struct TableCoreState<Selection = RowSelection> {
     /// Area per visible row. The first element is at row_offset.
     /// __read only__ Renewed with each render.
     pub row_areas: Vec<Rect>,
+    /// If your table uses varying row-heights the height
+    /// for each row is stored here.
+    pub row_heights: Vec<u16>,
+    /// If your table doesn't use varying row-heights, the
+    /// row-height is stored here.
+    pub row_height: u16,
     /// Area for each column plus the following spacer if any.
     /// Invisible columns have width 0, height is the height of the table_area.
     /// __read only__ Renewed with each render.
@@ -83,6 +89,8 @@ impl<Selection: Clone> Clone for TableCoreState<Selection> {
             header_area: self.header_area,
             table_area: self.table_area,
             row_areas: self.row_areas.clone(),
+            row_heights: self.row_heights.clone(),
+            row_height: self.row_height,
             column_areas: self.column_areas.clone(),
             column_layout: self.column_layout.clone(),
             footer_area: self.footer_area,
@@ -106,6 +114,8 @@ impl<Selection: Default> Default for TableCoreState<Selection> {
             header_area: Default::default(),
             table_area: Default::default(),
             row_areas: Default::default(),
+            row_heights: Default::default(),
+            row_height: Default::default(),
             column_areas: Default::default(),
             column_layout: Default::default(),
             footer_area: Default::default(),
@@ -271,7 +281,28 @@ impl<Selection: TableSelection> TableCoreState<Selection> {
     pub fn items_added(&mut self, pos: usize, n: usize) {
         self.rows = self.rows.saturating_add(n);
         self.vscroll.items_added(pos, n);
+        if pos <= self.row_heights.len() {
+            for _ in 0..n {
+                self.row_heights.insert(pos, 1);
+            }
+        }
         self.selection.items_added(pos, n);
+    }
+
+    /// Update the state to match adding items.
+    /// Use this function if you have varying row-heights.
+    ///
+    /// This corrects the number of rows, offset and selection.
+    /// This also corrects the stored row-heights with the
+    /// given heights.
+    pub fn items_added_with_heigths(&mut self, pos: usize, height: &[u16]) {
+        self.rows = self.rows.saturating_add(height.len());
+        self.vscroll.items_added(pos, height.len());
+        if pos <= self.row_heights.len() {
+            self.row_heights
+                .splice(pos..pos, height.into_iter().copied());
+        }
+        self.selection.items_added(pos, height.len());
     }
 
     /// Update the state to match removing items *during* event-handling.
@@ -283,6 +314,15 @@ impl<Selection: TableSelection> TableCoreState<Selection> {
     pub fn items_removed(&mut self, pos: usize, n: usize) {
         self.rows = self.rows.saturating_sub(n);
         self.vscroll.items_removed(pos, n);
+        if !self.row_heights.is_empty() {
+            if pos < self.row_heights.len() {
+                if pos + n < self.row_heights.len() {
+                    self.row_heights.drain(pos..pos + n);
+                } else {
+                    self.row_heights.drain(pos..);
+                }
+            }
+        }
         self.selection.items_removed(pos, n, self.rows);
     }
 
@@ -294,9 +334,12 @@ impl<Selection: TableSelection> TableCoreState<Selection> {
     /// This corrects the number of rows, offset and selection.
     pub fn rows_changed(&mut self, rows: usize) {
         self.selection.validate_rows(rows);
-        self.vscroll
-            .set_max_offset(self.rows.saturating_sub(self.vscroll.page_len));
-        self.vscroll.offset = self.vscroll.limited_offset(self.vscroll.offset);
+        self.vscroll.rows_changed(rows);
+        if !self.row_heights.is_empty() {
+            // don't know about row-heights.
+            self.row_heights.clear();
+            self.vscroll.page_len = 0;
+        }
         self.rows = rows;
     }
 
@@ -382,25 +425,50 @@ impl<Selection: TableSelection> TableCoreState<Selection> {
     /// Ensures that the given row is visible.
     /// Caveat: This doesn't work nicely if you have varying row-heights.
     /// Caveat: Number of rows needs to be correct.
-    pub fn scroll_to_row(&mut self, pos: usize) -> bool {
+    pub fn scroll_to_row(&mut self, mut pos: usize) -> bool {
         if pos >= self.rows {
             false
         } else if self.page_len() == 0 {
             self.set_row_offset(pos)
-        } else if pos == self.row_offset().saturating_add(self.page_len()) {
-            // the page might not fill the full area.
-            let heights = self.row_areas.iter().map(|v| v.height).sum::<u16>();
-            if heights < self.table_area.height {
-                false
+        } else if self.row_heights.is_empty() {
+            // fixed row-heights. allows us to calculate the offset.
+            if pos >= self.row_offset().saturating_add(self.page_len() - 1) {
+                if self.page_len() as u16 * self.row_height > self.table_area.height {
+                    self.set_row_offset(pos.saturating_sub(self.page_len() - 2))
+                } else {
+                    self.set_row_offset(pos.saturating_sub(self.page_len() - 1))
+                }
+            } else if pos < self.row_offset() {
+                self.set_row_offset(pos)
             } else {
-                self.set_row_offset(pos.saturating_sub(self.page_len()).saturating_add(1))
+                false
             }
-        } else if pos >= self.row_offset().saturating_add(self.page_len()) {
-            self.set_row_offset(pos.saturating_sub(self.page_len()).saturating_add(1))
-        } else if pos < self.row_offset() {
-            self.set_row_offset(pos)
         } else {
-            false
+            // varying row-height. use the stored values.
+            if pos >= self.row_offset().saturating_add(self.page_len() - 1) {
+                if pos >= self.row_heights.len() {
+                    self.set_row_offset(pos)
+                } else {
+                    let mut sum_height = self.row_heights[pos];
+                    if sum_height < self.table_area.height {
+                        loop {
+                            if pos < 1 {
+                                break;
+                            }
+                            sum_height += self.row_heights[pos - 1];
+                            if sum_height > self.table_area.height {
+                                break;
+                            }
+                            pos -= 1;
+                        }
+                    }
+                    self.set_row_offset(pos)
+                }
+            } else if pos < self.row_offset() {
+                self.set_row_offset(pos)
+            } else {
+                false
+            }
         }
     }
 

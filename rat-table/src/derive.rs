@@ -3,17 +3,13 @@
 /// __Only useful if you want to implement a new Table widget__
 macro_rules! derive_table_widget {
     () => {
-        /// Normally rendering runs the iterator to the end to find
-        /// out the number of rows for the table.
-        ///
-        /// For very long list this can be noticeably slow.
-        /// If you set this flag the number of rows will be set to
-        /// usize::MAX instead.
-        ///
-        /// Usually it's ok to leave this on.
-        #[inline]
-        pub fn no_row_count(mut self, no_row_count: bool) -> Self {
-            self.core = self.core.no_row_count(no_row_count);
+        /// If your table uses varying row-heights for each row
+        /// all page calculations will fail (somewhat).
+        /// If you enable this flag, the row-heights for
+        /// each row will be stored in the state to allow
+        /// accurate page-calculations.
+        pub fn varying_heights(mut self, varying: bool) -> Self {
+            self.core = self.core.varying_heights(varying);
             self
         }
 
