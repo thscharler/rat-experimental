@@ -30,7 +30,6 @@ pub(crate) fn fallback_select_style(style: Style) -> Style {
 /// * buf: Target buffer
 #[allow(clippy::collapsible_if)]
 pub(crate) fn transfer_buffer(tmp: &mut Buffer, h_offset: u16, view_area: Rect, buf: &mut Buffer) {
-    // copy buffer
     for (cell_offset, cell) in tmp.content.iter_mut().enumerate() {
         let tmp_row = cell_offset as u16 / tmp.area.width;
         let tmp_col = cell_offset as u16 % tmp.area.width;

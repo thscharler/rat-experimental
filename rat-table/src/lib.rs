@@ -12,7 +12,7 @@ mod util;
 mod vec;
 
 pub use edit::{Mode, TableEdit, TableEditState, TableEditor, TableEditorState};
-pub use render::{Cells, RenderContext};
+pub use render::RenderContext;
 pub use style::TableStyle;
 pub use table::{Table, TableState};
 pub use vec::{TableVec, TableVecState};

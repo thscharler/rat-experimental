@@ -1,7 +1,7 @@
 use crate::_private::NonExhaustive;
 use crate::LayoutWidth;
 use crate::core::TableCoreState;
-use crate::render::{Cells, RenderContext};
+use crate::render::RenderContext;
 use crate::selection::TableSelection;
 use crate::selection::row::RowSelection;
 use crate::style::TableStyle;
@@ -27,7 +27,7 @@ pub struct TableCore<'a, T: 'a, Selection = RowSelection> {
     header: Vec<Text<'a>>,
     footer: Vec<Text<'a>>,
     row_height_fn: Box<dyn FnMut(&T, &RenderContext) -> u16 + 'a>,
-    render_row_fn: Option<Box<dyn FnMut(&T, Rect, &mut Buffer, &RenderContext) -> Cells + 'a>>,
+    render_row_fn: Option<Box<dyn FnMut(&T, Rect, &mut Buffer, &RenderContext) -> bool + 'a>>,
     render_cell_fn: Vec<Option<Box<dyn FnMut(&T, Rect, &mut Buffer, &RenderContext) + 'a>>>,
 
     widths: Vec<Constraint>,
@@ -120,7 +120,7 @@ impl<'a, T, Selection> TableCore<'a, T, Selection> {
     #[inline]
     pub fn render_row(
         mut self,
-        render_row_fn: impl FnMut(&T, Rect, &mut Buffer, &RenderContext) -> Cells + 'a,
+        render_row_fn: impl FnMut(&T, Rect, &mut Buffer, &RenderContext) -> bool + 'a,
     ) -> Self {
         self.render_row_fn = Some(Box::new(render_row_fn));
         self
@@ -706,14 +706,14 @@ fn render_table<'a, T, Selection: TableSelection>(
                 if let Some(render_row) = widget.render_row_fn.as_mut() {
                     render_row(value, render_row_area, &mut row_buf, &ctx)
                 } else {
-                    Cells::Render
+                    true
                 }
             } else {
-                Cells::Render
+                true
             };
 
             // can skip this entirely
-            if !matches!(render_cells, Cells::Skip) && render_row_area.height > 0 {
+            if render_cells && render_row_area.height > 0 {
                 let mut col = 0;
                 loop {
                     if col >= state.columns {
@@ -761,11 +761,9 @@ fn render_table<'a, T, Selection: TableSelection>(
                     if render_cell_area.right() > state.hscroll.offset as u16
                         || render_cell_area.left() < state.hscroll.offset as u16 + area.width
                     {
-                        if !matches!(render_cells, Cells::NoBackground) {
-                            if let Some(select_style) = ctx.select_style {
-                                row_buf.set_style(render_cell_area, select_style);
-                                row_buf.set_style(ctx.space_area, select_style);
-                            }
+                        if let Some(select_style) = ctx.select_style {
+                            row_buf.set_style(render_cell_area, select_style);
+                            row_buf.set_style(ctx.space_area, select_style);
                         }
 
                         if let Some(Some(render_cell)) = widget.render_cell_fn.get_mut(col) {
@@ -777,6 +775,7 @@ fn render_table<'a, T, Selection: TableSelection>(
                 }
 
                 // render shifted and clipped row.
+                // this moves the cells from row_buf to the screen buf.
                 transfer_buffer(
                     &mut row_buf,
                     state.hscroll.offset() as u16,

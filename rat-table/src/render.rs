@@ -37,16 +37,3 @@ pub struct RenderContext<'a> {
     /// Construct with `..Default::default()`
     pub non_exhaustive: NonExhaustive,
 }
-
-/// Return value for the row-rendering closure.
-#[derive(Clone, Copy, PartialEq, Eq, Default)]
-pub enum Cells {
-    /// Render the individual cells too.
-    #[default]
-    Render,
-    /// Render the individual cells but don't draw the background.
-    // todo: remove. replace all this by a bool
-    NoBackground,
-    /// Skip rendering individual cells.
-    Skip,
-}

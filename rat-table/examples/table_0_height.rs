@@ -12,7 +12,7 @@ use rat_focus::HasFocus;
 use rat_scrolled::{Scroll, ScrollStyle};
 use rat_table::event::Outcome;
 use rat_table::selection::row::RowSelection;
-use rat_table::{Cells, Table, TableState};
+use rat_table::{Table, TableState};
 use rat_theme4::StyleName;
 use rat_theme4::theme::SalsaTheme;
 use ratatui_core::buffer::Buffer;
@@ -84,6 +84,7 @@ fn render(
             Constraint::Length(15),
             Constraint::Length(3),
         ])
+        .varying_heights(true)
         .row_height(|v, _| v.row_height)
         .render_row(|_v, mut area, buf, _ctx| {
             if area.height > 1 {
@@ -99,7 +100,7 @@ fn render(
                     area.y += 1;
                 }
             }
-            Cells::Render
+            true
         })
         .render_cell(0, |_v, area, buf, ctx| {
             fmt1.fmt_u(ctx.row).render(area, buf)

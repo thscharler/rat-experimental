@@ -24,17 +24,11 @@ macro_rules! derive_table_widget {
         }
 
         /// Render the full row-area.
-        /// The render closure returns a [Cells](crate::Cells).
+        /// The closure returns true if individual cells should be rendered.
         #[inline]
         pub fn render_row(
             mut self,
-            render_row_fn: impl FnMut(
-                &T,
-                Rect,
-                &mut Buffer,
-                &$crate::RenderContext,
-            ) -> $crate::Cells
-            + 'a,
+            render_row_fn: impl FnMut(&T, Rect, &mut Buffer, &$crate::RenderContext) -> bool + 'a,
         ) -> Self {
             self.core = self.core.render_row(render_row_fn);
             self
