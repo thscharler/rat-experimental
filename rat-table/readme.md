@@ -17,15 +17,14 @@ For examples see [rat-table GitHub][refGitHubTable].
 Improves over ratatui-Table by rendering only the visible parts of 
 the data instead of building Row/Cell structs with the table data. 
 
-You can use any Iterator to provide the data for the table, and 
-you set a closure for each column that will do the actual rendering
-of the cell-value. This closure will be called once for each visible
-cell of the table. 
-
-* Row and column scrolling. 
+* Table data is set as an Iterator.
+  * Rendering a cell is done in a closure for each column.
+  * Extra closure for rendering a full row regardless of column bounds.
+  * There is one more closure for a data-dependent row-height. 
+  
+* Horizontal scrolling (cell/column).
+* Flex layout for columns.
 * Varying row heights.
-* Alternate full row rendering.
-* Table can be wider than the rendered area. 
 * Different selection-models (Cell, Row, RowSet)
   * Can provide your own too.
 * Event-handling for crossterm.

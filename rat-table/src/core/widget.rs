@@ -1,11 +1,10 @@
 use crate::_private::NonExhaustive;
-use crate::LayoutWidth;
 use crate::core::TableCoreState;
-use crate::render::RenderContext;
 use crate::selection::TableSelection;
 use crate::selection::row::RowSelection;
 use crate::style::TableStyle;
 use crate::util::{fallback_select_style, revert_style, transfer_buffer};
+use crate::{LayoutWidth, RenderContext};
 use rat_scrolled::{Scroll, ScrollArea, ScrollAreaState};
 use ratatui_core::buffer::Buffer;
 use ratatui_core::layout::{Constraint, Flex, Layout, Rect};

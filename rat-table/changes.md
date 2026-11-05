@@ -1,3 +1,11 @@
+# 0.2
+
+Replaced the trait with separated closures for row-height, 
+row-render and cell-render. 
+
+Removed more dubiously useless functions.
+Added proper support for varying row-heights.
+
 # 0.1
 
 Initial version. Reused the rendering logic from rat-ftable but
