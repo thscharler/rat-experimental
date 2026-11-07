@@ -4,7 +4,6 @@ use crate::edit::{Mode, TableEditState, TableEditor};
 use crate::selection::row::RowSelection;
 use ratatui_core::buffer::Buffer;
 use ratatui_core::layout::Rect;
-use ratatui_core::widgets::StatefulWidget;
 
 /// Table-widget and inline editor for one table-row.
 ///
@@ -19,7 +18,7 @@ pub struct TableEdit<'a, T, E>
 where
     E: TableEditor<T> + 'a,
 {
-    core: TableCore<'a, T, RowSelection>,
+    core: TableCore<'a, &'a T, RowSelection>,
     editor: E,
 }
 
@@ -35,16 +34,14 @@ where
     }
 
     derive_table_widget!();
+    derive_table_widget!(REF_T);
 }
 
-impl<'a, T, E> StatefulWidget for TableEdit<'a, T, E>
+impl<'a, T, E> TableEdit<'a, T, E>
 where
     E: TableEditor<T> + 'a,
 {
-    type State = TableEditState<T, E::State>;
-
-    #[allow(clippy::collapsible_else_if)]
-    fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+    pub fn render(self, area: Rect, buf: &mut Buffer, state: &'a mut TableEditState<T, E::State>) {
         let mut iter = state.data.iter();
         let data = Some((&mut iter) as &mut dyn Iterator<Item = &T>);
 

@@ -16,6 +16,7 @@ use std::cmp::min;
 use std::collections::HashSet;
 
 /// State for the core table.
+#[derive(Debug)]
 pub struct TableCoreState<Selection = RowSelection> {
     /// Current focus state.
     /// __read+write__

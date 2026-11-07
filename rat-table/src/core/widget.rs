@@ -22,10 +22,10 @@ use std::rc::Rc;
 /// rendering of the table.
 ///
 /// It is used as the backend for the user-facing widgets.
-pub struct TableCore<'a, T: 'a, Selection = RowSelection> {
+pub struct TableCore<'a, T, Selection = RowSelection> {
     header: Vec<Text<'a>>,
     footer: Vec<Text<'a>>,
-    row_height_fn: Box<dyn FnMut(&T, &RenderContext) -> u16 + 'a>,
+    row_height_fn: Option<Box<dyn FnMut(&T, &RenderContext) -> u16 + 'a>>,
     render_row_fn: Option<Box<dyn FnMut(&T, Rect, &mut Buffer, &RenderContext) -> bool + 'a>>,
     render_cell_fn: Vec<Option<Box<dyn FnMut(&T, Rect, &mut Buffer, &RenderContext) + 'a>>>,
 
@@ -57,19 +57,12 @@ pub struct TableCore<'a, T: 'a, Selection = RowSelection> {
     _phantom: PhantomData<Selection>,
 }
 
-fn default_row_height<'b, T: 'b>(_v: &T, _c: &RenderContext) -> u16 {
-    1
-}
-
-impl<'a, T, Selection> Default for TableCore<'a, T, Selection>
-where
-    T: 'a,
-{
+impl<'a, T, Selection> Default for TableCore<'a, T, Selection> {
     fn default() -> Self {
         Self {
             header: Default::default(),
             footer: Default::default(),
-            row_height_fn: Box::new(default_row_height),
+            row_height_fn: Default::default(),
             render_row_fn: Default::default(),
             render_cell_fn: Default::default(),
             widths: Default::default(),
@@ -111,7 +104,7 @@ impl<'a, T, Selection> TableCore<'a, T, Selection> {
     /// Set the closure that calculates the row-height for a value.
     #[inline]
     pub fn row_height(mut self, row_height_fn: impl FnMut(&T, &RenderContext) -> u16 + 'a) -> Self {
-        self.row_height_fn = Box::new(row_height_fn);
+        self.row_height_fn = Some(Box::new(row_height_fn));
         self
     }
 
@@ -516,7 +509,7 @@ where
 {
     pub fn render(
         self,
-        data: Option<&mut dyn Iterator<Item = &'a T>>,
+        data: Option<&mut dyn Iterator<Item = T>>,
         area: Rect,
         buf: &mut Buffer,
         state: &mut TableCoreState<Selection>,
@@ -531,7 +524,7 @@ where
 
 fn render_table<'a, T, Selection: TableSelection>(
     mut widget: TableCore<'a, T, Selection>,
-    mut data: Option<&mut dyn Iterator<Item = &T>>,
+    mut data: Option<&mut dyn Iterator<Item = T>>,
     area: Rect,
     buf: &mut Buffer,
     state: &mut TableCoreState<Selection>,
@@ -626,14 +619,20 @@ fn render_table<'a, T, Selection: TableSelection>(
                 if let Some(rr) = row {
                     if rr + 1 < state.vscroll.offset() {
                         ctx.row = rr;
-                        let row_height = (widget.row_height_fn)(value, &ctx);
+                        let row_height = widget
+                            .row_height_fn
+                            .as_mut()
+                            .map_or(1, |f| (*f)(&value, &ctx));
                         state.row_heights.push(row_height)
                     }
                     row = Some(rr + 1);
                 } else {
                     if 0 < state.vscroll.offset() {
                         ctx.row = 0;
-                        let row_height = (widget.row_height_fn)(value, &ctx);
+                        let row_height = widget
+                            .row_height_fn
+                            .as_mut()
+                            .map_or(1, |f| (*f)(&value, &ctx));
                         state.row_heights.push(row_height)
                     }
                     row = Some(0);
@@ -664,7 +663,10 @@ fn render_table<'a, T, Selection: TableSelection>(
             ctx.space_area = Rect::default();
 
             // Render each row to a temporary buffer.
-            let row_height = (widget.row_height_fn)(value, &ctx);
+            let row_height = widget
+                .row_height_fn
+                .as_mut()
+                .map_or(1, |f| (*f)(&value, &ctx));
             let render_row_area = Rect::new(0, 0, width, row_height);
             ctx.row_area = render_row_area;
             row_buf.resize(render_row_area);
@@ -703,7 +705,7 @@ fn render_table<'a, T, Selection: TableSelection>(
                 }
 
                 if let Some(render_row) = widget.render_row_fn.as_mut() {
-                    render_row(value, render_row_area, &mut row_buf, &ctx)
+                    render_row(&value, render_row_area, &mut row_buf, &ctx)
                 } else {
                     true
                 }
@@ -766,7 +768,7 @@ fn render_table<'a, T, Selection: TableSelection>(
                         }
 
                         if let Some(Some(render_cell)) = widget.render_cell_fn.get_mut(col) {
-                            render_cell(value, render_cell_area, &mut row_buf, &ctx);
+                            render_cell(&value, render_cell_area, &mut row_buf, &ctx);
                         }
                     }
 
@@ -820,7 +822,10 @@ fn render_table<'a, T, Selection: TableSelection>(
 
         let mut sum_height = row_heights.iter().sum::<u16>();
         loop {
-            let row_height = (widget.row_height_fn)(value, &ctx);
+            let row_height = widget
+                .row_height_fn
+                .as_mut()
+                .map_or(1, |f| (*f)(&value, &ctx));
             if widget.varying_heights {
                 state.row_heights.push(row_height);
             }

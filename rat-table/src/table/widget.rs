@@ -50,7 +50,7 @@ use ratatui_core::widgets::StatefulWidget;
 /// ```
 pub struct Table<'a, T, Selection = RowSelection> {
     core: TableCore<'a, T, Selection>,
-    data: Option<Box<dyn Iterator<Item = &'a T> + 'a>>,
+    data: Option<Box<dyn Iterator<Item = T> + 'a>>,
 }
 
 impl<'a, T, Selection> Default for Table<'a, T, Selection> {
@@ -71,12 +71,13 @@ impl<'a, T: 'a, Selection> Table<'a, T, Selection> {
     }
 
     #[inline]
-    pub fn data(mut self, data: impl IntoIterator<Item = &'a T> + 'a) -> Self {
+    pub fn data(mut self, data: impl IntoIterator<Item = T> + 'a) -> Self {
         self.data = Some(Box::new(data.into_iter()));
         self
     }
 
     derive_table_widget!();
+    derive_table_widget!(T);
 }
 
 impl<'a, T, Selection> StatefulWidget for Table<'a, T, Selection>
