@@ -514,8 +514,8 @@ where
         buf: &mut Buffer,
         state: &mut TableCoreState<Selection>,
     ) {
-        if let Some(mut data) = data {
-            render_table(self, Some(&mut data), area, buf, state);
+        if let Some(data) = data {
+            render_table(self, Some(data), area, buf, state);
         } else {
             render_table(self, None, area, buf, state);
         }
@@ -1062,7 +1062,6 @@ fn calculate_column_areas<Selection>(
     }
 }
 
-#[expect(clippy::collapsible_else_if)]
 fn patch_select(
     style: Option<Style>,
     focus_style: Option<Style>,

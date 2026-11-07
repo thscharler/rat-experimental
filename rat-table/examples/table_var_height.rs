@@ -8,7 +8,7 @@ use crate::mini_salsa::{MiniSalsaState, run_ui, setup_logging};
 use crate::widget::render_tablestate::render_tablestate_row;
 use format_num_pattern::NumberFormat;
 use rat_event::{HandleEvent, Regular, event_flow};
-use rat_focus::HasFocus;
+use rat_focus::{Focus, FocusBuilder, FocusFlag, HasFocus};
 use rat_scrolled::{Scroll, ScrollStyle};
 use rat_table::event::Outcome;
 use rat_table::selection::row::RowSelection;
@@ -42,7 +42,16 @@ fn main() -> Result<(), anyhow::Error> {
             })
             .take(100_000)
             .collect(),
+        table2_data: data::DATA
+            .iter()
+            .map(|v| Sample2 {
+                text: *v,
+                num1: rand::random(),
+            })
+            .take(100_000)
+            .collect(),
         table: Default::default(),
+        table2: Default::default(),
     };
 
     run_ui("var_height", mock_init, event, render, &mut state)
@@ -56,9 +65,17 @@ struct Sample {
     pub(crate) row_height: u16,
 }
 
+#[derive(Clone, Copy)]
+struct Sample2 {
+    pub(crate) text: &'static str,
+    pub(crate) num1: f32,
+}
+
 struct State {
     table_data: Vec<Sample>,
+    table2_data: Vec<Sample2>,
     table: TableState<RowSelection>,
+    table2: TableState<RowSelection>,
 }
 
 fn render(
@@ -67,9 +84,13 @@ fn render(
     ctx: &mut MiniSalsaState,
     state: &mut State,
 ) -> Result<(), anyhow::Error> {
-    let l0 = Layout::horizontal([Constraint::Percentage(61), Constraint::Percentage(39)])
-        .flex(Flex::Center)
-        .split(area);
+    let l0 = Layout::horizontal([
+        Constraint::Percentage(30),
+        Constraint::Percentage(30),
+        Constraint::Percentage(39),
+    ])
+    .flex(Flex::Center)
+    .split(area);
 
     let mut tmp = String::default();
     let fmt1 = NumberFormat::new("000000").expect("fmt");
@@ -125,7 +146,28 @@ fn render(
         .styles(table(&ctx.theme))
         .render(l0[0], buf, &mut state.table);
 
-    render_tablestate_row(&state.table, l0[1], buf);
+    Table::new()
+        .data(state.table2_data.iter().copied())
+        .widths([Constraint::Length(20), Constraint::Length(15)])
+        .render_cell(0, |v, area, buf, ctx| {
+            v.text.render(area, buf);
+        })
+        .render_cell(1, |v, area, buf, ctx| {
+            fmt1.fmt_u(v.num1).render(area, buf);
+        })
+        .column_spacing(1)
+        .header(["Text", "Val1"])
+        .block(
+            Block::bordered()
+                .border_type(BorderType::Rounded)
+                .title("0-height rows"),
+        )
+        .vscroll(Scroll::new())
+        .flex(Flex::End)
+        .styles(table(&ctx.theme))
+        .render(l0[1], buf, &mut state.table2);
+
+    render_tablestate_row(&state.table, l0[2], buf);
 
     Ok(())
 }
@@ -155,15 +197,23 @@ fn scroll(th: &SalsaTheme) -> ScrollStyle {
     }
 }
 
+fn focus(state: &mut State) -> Focus {
+    let mut fb = FocusBuilder::new(None);
+    fb.widget(&state.table);
+    fb.widget(&state.table2);
+    fb.widget(&FocusFlag::new());
+    fb.build()
+}
+
 fn event(
     event: &Event,
-    _ctx: &mut MiniSalsaState,
+    ctx: &mut MiniSalsaState,
     state: &mut State,
 ) -> Result<Outcome, anyhow::Error> {
-    // override focus
-    state.table.focus().set(true);
+    ctx.focus_outcome = focus(state).handle(event, Regular);
 
     event_flow!(state.table.handle(event, Regular));
+    event_flow!(state.table2.handle(event, Regular));
 
     Ok(Outcome::Continue)
 }
