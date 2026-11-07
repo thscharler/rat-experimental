@@ -48,12 +48,12 @@ use ratatui_core::widgets::StatefulWidget;
 ///         .styles(table(&ctx.theme))
 ///         .render(l0[0], buf, &mut state.table);
 /// ```
-pub struct Table<'a, T, Selection = RowSelection> {
+pub struct Table<'a, T: Copy, Selection = RowSelection> {
     core: TableCore<'a, T, Selection>,
     data: Option<Box<dyn Iterator<Item = T> + 'a>>,
 }
 
-impl<'a, T, Selection> Default for Table<'a, T, Selection> {
+impl<'a, T: Copy, Selection> Default for Table<'a, T, Selection> {
     fn default() -> Self {
         Self {
             core: Default::default(),
@@ -62,7 +62,7 @@ impl<'a, T, Selection> Default for Table<'a, T, Selection> {
     }
 }
 
-impl<'a, T: 'a, Selection> Table<'a, T, Selection> {
+impl<'a, T: Copy + 'a, Selection> Table<'a, T, Selection> {
     pub fn new() -> Self
     where
         Selection: Default,
@@ -76,11 +76,11 @@ impl<'a, T: 'a, Selection> Table<'a, T, Selection> {
         self
     }
 
-    derive_table_widget!();
     derive_table_widget!(T);
+    derive_table_widget!();
 }
 
-impl<'a, T, Selection> StatefulWidget for Table<'a, T, Selection>
+impl<'a, T: Copy, Selection> StatefulWidget for Table<'a, T, Selection>
 where
     T: 'a,
     Selection: TableSelection + Default,

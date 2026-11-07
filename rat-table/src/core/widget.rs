@@ -22,12 +22,12 @@ use std::rc::Rc;
 /// rendering of the table.
 ///
 /// It is used as the backend for the user-facing widgets.
-pub struct TableCore<'a, T, Selection = RowSelection> {
+pub struct TableCore<'a, T: Copy, Selection = RowSelection> {
     header: Vec<Text<'a>>,
     footer: Vec<Text<'a>>,
-    row_height_fn: Option<Box<dyn FnMut(&T, &RenderContext) -> u16 + 'a>>,
-    render_row_fn: Option<Box<dyn FnMut(&T, Rect, &mut Buffer, &RenderContext) -> bool + 'a>>,
-    render_cell_fn: Vec<Option<Box<dyn FnMut(&T, Rect, &mut Buffer, &RenderContext) + 'a>>>,
+    row_height_fn: Option<Box<dyn FnMut(T, &RenderContext) -> u16 + 'a>>,
+    render_row_fn: Option<Box<dyn FnMut(T, Rect, &mut Buffer, &RenderContext) -> bool + 'a>>,
+    render_cell_fn: Vec<Option<Box<dyn FnMut(T, Rect, &mut Buffer, &RenderContext) + 'a>>>,
 
     widths: Vec<Constraint>,
     varying_heights: bool,
@@ -57,7 +57,7 @@ pub struct TableCore<'a, T, Selection = RowSelection> {
     _phantom: PhantomData<Selection>,
 }
 
-impl<'a, T, Selection> Default for TableCore<'a, T, Selection> {
+impl<'a, T: Copy, Selection> Default for TableCore<'a, T, Selection> {
     fn default() -> Self {
         Self {
             header: Default::default(),
@@ -92,7 +92,7 @@ impl<'a, T, Selection> Default for TableCore<'a, T, Selection> {
     }
 }
 
-impl<'a, T, Selection> TableCore<'a, T, Selection> {
+impl<'a, T: Copy, Selection> TableCore<'a, T, Selection> {
     /// New, empty Table.
     pub fn new() -> Self
     where
@@ -103,7 +103,7 @@ impl<'a, T, Selection> TableCore<'a, T, Selection> {
 
     /// Set the closure that calculates the row-height for a value.
     #[inline]
-    pub fn row_height(mut self, row_height_fn: impl FnMut(&T, &RenderContext) -> u16 + 'a) -> Self {
+    pub fn row_height(mut self, row_height_fn: impl FnMut(T, &RenderContext) -> u16 + 'a) -> Self {
         self.row_height_fn = Some(Box::new(row_height_fn));
         self
     }
@@ -112,7 +112,7 @@ impl<'a, T, Selection> TableCore<'a, T, Selection> {
     #[inline]
     pub fn render_row(
         mut self,
-        render_row_fn: impl FnMut(&T, Rect, &mut Buffer, &RenderContext) -> bool + 'a,
+        render_row_fn: impl FnMut(T, Rect, &mut Buffer, &RenderContext) -> bool + 'a,
     ) -> Self {
         self.render_row_fn = Some(Box::new(render_row_fn));
         self
@@ -123,7 +123,7 @@ impl<'a, T, Selection> TableCore<'a, T, Selection> {
     pub fn render_cell(
         mut self,
         column: usize,
-        render_cell_fn: impl FnMut(&T, Rect, &mut Buffer, &RenderContext) + 'a,
+        render_cell_fn: impl FnMut(T, Rect, &mut Buffer, &RenderContext) + 'a,
     ) -> Self {
         while self.render_cell_fn.len() <= column {
             self.render_cell_fn.push(None);
@@ -433,7 +433,7 @@ impl<'a, T, Selection> TableCore<'a, T, Selection> {
     }
 }
 
-fn total_width<T, Selection>(widget: &TableCore<'_, T, Selection>, area_width: u16) -> u16 {
+fn total_width<T: Copy, Selection>(widget: &TableCore<'_, T, Selection>, area_width: u16) -> u16 {
     match widget.layout_width {
         LayoutWidth::Length(len) => len,
         LayoutWidth::Columns => {
@@ -462,7 +462,7 @@ fn total_width<T, Selection>(widget: &TableCore<'_, T, Selection>, area_width: u
 }
 
 // Do the column-layout. Fill in missing columns, if necessary.
-fn layout_columns<T, Selection>(
+fn layout_columns<T: Copy, Selection>(
     widget: &TableCore<'_, T, Selection>,
     area_width: u16,
 ) -> (u16, Rc<[Rect]>, Rc<[Rect]>) {
@@ -479,7 +479,10 @@ fn layout_columns<T, Selection>(
 
 // Layout header/table/footer
 #[inline]
-fn layout_areas<T, Selection>(widget: &TableCore<'_, T, Selection>, area: Rect) -> Rc<[Rect]> {
+fn layout_areas<T: Copy, Selection>(
+    widget: &TableCore<'_, T, Selection>,
+    area: Rect,
+) -> Rc<[Rect]> {
     let heights = vec![
         Constraint::Length(
             widget
@@ -503,7 +506,7 @@ fn layout_areas<T, Selection>(widget: &TableCore<'_, T, Selection>, area: Rect) 
     Layout::vertical(heights).split(area)
 }
 
-impl<'a, T, Selection> TableCore<'a, T, Selection>
+impl<'a, T: Copy, Selection> TableCore<'a, T, Selection>
 where
     Selection: TableSelection,
 {
@@ -522,7 +525,7 @@ where
     }
 }
 
-fn render_table<'a, T, Selection: TableSelection>(
+fn render_table<'a, T: Copy, Selection: TableSelection>(
     mut widget: TableCore<'a, T, Selection>,
     mut data: Option<&mut dyn Iterator<Item = T>>,
     area: Rect,
@@ -622,7 +625,7 @@ fn render_table<'a, T, Selection: TableSelection>(
                         let row_height = widget
                             .row_height_fn
                             .as_mut()
-                            .map_or(1, |f| (*f)(&value, &ctx));
+                            .map_or(1, |f| (*f)(value, &ctx));
                         state.row_heights.push(row_height)
                     }
                     row = Some(rr + 1);
@@ -632,7 +635,7 @@ fn render_table<'a, T, Selection: TableSelection>(
                         let row_height = widget
                             .row_height_fn
                             .as_mut()
-                            .map_or(1, |f| (*f)(&value, &ctx));
+                            .map_or(1, |f| (*f)(value, &ctx));
                         state.row_heights.push(row_height)
                     }
                     row = Some(0);
@@ -666,7 +669,7 @@ fn render_table<'a, T, Selection: TableSelection>(
             let row_height = widget
                 .row_height_fn
                 .as_mut()
-                .map_or(1, |f| (*f)(&value, &ctx));
+                .map_or(1, |f| (*f)(value, &ctx));
             let render_row_area = Rect::new(0, 0, width, row_height);
             ctx.row_area = render_row_area;
             row_buf.resize(render_row_area);
@@ -705,7 +708,7 @@ fn render_table<'a, T, Selection: TableSelection>(
                 }
 
                 if let Some(render_row) = widget.render_row_fn.as_mut() {
-                    render_row(&value, render_row_area, &mut row_buf, &ctx)
+                    render_row(value, render_row_area, &mut row_buf, &ctx)
                 } else {
                     true
                 }
@@ -768,7 +771,7 @@ fn render_table<'a, T, Selection: TableSelection>(
                         }
 
                         if let Some(Some(render_cell)) = widget.render_cell_fn.get_mut(col) {
-                            render_cell(&value, render_cell_area, &mut row_buf, &ctx);
+                            render_cell(value, render_cell_area, &mut row_buf, &ctx);
                         }
                     }
 
@@ -825,7 +828,7 @@ fn render_table<'a, T, Selection: TableSelection>(
             let row_height = widget
                 .row_height_fn
                 .as_mut()
-                .map_or(1, |f| (*f)(&value, &ctx));
+                .map_or(1, |f| (*f)(value, &ctx));
             if widget.varying_heights {
                 state.row_heights.push(row_height);
             }
@@ -885,7 +888,7 @@ fn render_table<'a, T, Selection: TableSelection>(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn render_footer<T, Selection: TableSelection>(
+fn render_footer<T: Copy, Selection: TableSelection>(
     widget: &TableCore<'_, T, Selection>,
     columns: usize,
     width: u16,
@@ -951,7 +954,7 @@ fn render_footer<T, Selection: TableSelection>(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn render_header<T, Selection: TableSelection>(
+fn render_header<T: Copy, Selection: TableSelection>(
     widget: &TableCore<'_, T, Selection>,
     columns: usize,
     width: u16,

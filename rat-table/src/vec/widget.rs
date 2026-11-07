@@ -64,8 +64,8 @@ impl<'a, T, Selection> TableVec<'a, T, Selection> {
         Self::default()
     }
 
-    derive_table_widget!();
     derive_table_widget!(REF_T);
+    derive_table_widget!();
 }
 
 impl<'a, T, Selection> TableVec<'a, T, Selection>
