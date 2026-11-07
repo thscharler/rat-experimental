@@ -1,5 +1,5 @@
 [package]
-name = "rat-table"
+name = "rat-ftable2"
 version = "0.2.0"
 edition = "2024"
 description = "ratatui table widget for large data"

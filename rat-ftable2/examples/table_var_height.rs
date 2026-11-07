@@ -9,10 +9,10 @@ use crate::widget::render_tablestate::render_tablestate_row;
 use format_num_pattern::NumberFormat;
 use rat_event::{HandleEvent, Regular, event_flow};
 use rat_focus::{Focus, FocusBuilder, FocusFlag, HasFocus};
+use rat_ftable2::event::Outcome;
+use rat_ftable2::selection::row::RowSelection;
+use rat_ftable2::{Table, TableState};
 use rat_scrolled::{Scroll, ScrollStyle};
-use rat_table::event::Outcome;
-use rat_table::selection::row::RowSelection;
-use rat_table::{Table, TableState};
 use rat_theme4::StyleName;
 use rat_theme4::theme::SalsaTheme;
 use ratatui_core::buffer::Buffer;
@@ -172,8 +172,8 @@ fn render(
     Ok(())
 }
 
-fn table(th: &SalsaTheme) -> rat_table::TableStyle {
-    rat_table::TableStyle {
+fn table(th: &SalsaTheme) -> rat_ftable2::TableStyle {
+    rat_ftable2::TableStyle {
         style: th.style(Style::CONTAINER_BASE),
         select_row: Some(th.style(Style::SELECT)),
         show_row_focus: true,

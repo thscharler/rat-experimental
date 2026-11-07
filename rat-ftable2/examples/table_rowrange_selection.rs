@@ -1,20 +1,21 @@
 //!
-//! Cell selection
+//! Row range selection.
 //!
 
 use crate::mini_salsa::mock_init;
 use crate::mini_salsa::{MiniSalsaState, run_ui, setup_logging};
 use format_num_pattern::NumberFormat;
-use rat_event::{HandleEvent, Outcome, Regular, event_flow};
+use rat_event::{HandleEvent, Regular, event_flow};
 use rat_focus::HasFocus;
+use rat_ftable2::event::Outcome;
+use rat_ftable2::selection::rowset::RowSetSelection;
+use rat_ftable2::{Table, TableState};
 use rat_scrolled::{Scroll, ScrollStyle};
-use rat_table::selection::cell::CellSelection;
-use rat_table::{Table, TableState};
+use rat_theme4::StyleName;
 use rat_theme4::theme::SalsaTheme;
-use rat_theme4::{RatWidgetColor, StyleName};
 use ratatui_core::buffer::Buffer;
 use ratatui_core::layout::{Constraint, Flex, Layout, Rect};
-use ratatui_core::style::{Color, Style};
+use ratatui_core::style::Style;
 use ratatui_core::widgets::{StatefulWidget, Widget};
 use ratatui_crossterm::crossterm::event::Event;
 use ratatui_widgets::block::Block;
@@ -39,7 +40,7 @@ fn main() -> Result<(), anyhow::Error> {
         table: Default::default(),
     };
 
-    run_ui("cell_selection", mock_init, event, render, &mut state)
+    run_ui("rowrange_selection", mock_init, event, render, &mut state)
 }
 
 struct Sample {
@@ -51,7 +52,7 @@ struct Sample {
 
 struct State {
     table_data: Vec<Sample>,
-    table: TableState<CellSelection>,
+    table: TableState<RowSetSelection>,
 }
 
 fn render(
@@ -69,23 +70,7 @@ fn render(
     let num2_fmt = NumberFormat::new("####0.00").expect("fmt");
 
     Table::default()
-        .data(state.table_data.iter())
-        .render_cell(0, |_, area, buf, ctx| {
-            row_fmt.fmt_u(ctx.row).render(area, buf);
-        })
-        .render_cell(1, |v, area, buf, _ctx| {
-            v.text.render(area, buf);
-        })
-        .render_cell(2, |v, area, buf, _ctx| {
-            num1_fmt.fmt_u(v.num1).render(area, buf);
-        })
-        .render_cell(3, |v, area, buf, _ctx| {
-            num2_fmt.fmt_u(v.num2).render(area, buf);
-        })
-        .render_cell(4, |v, area, buf, _ctx| {
-            let cc = if v.check { "\u{2622}" } else { "\u{2623}" };
-            cc.render(area, buf);
-        })
+        .data(&state.table_data)
         .widths([
             Constraint::Length(6),
             Constraint::Length(20),
@@ -93,28 +78,38 @@ fn render(
             Constraint::Length(15),
             Constraint::Length(3),
         ])
-        .row_height(|_, _| 1)
+        .render_cell(0, |_v, area, buf, ctx| {
+            row_fmt.fmt_u(ctx.row).render(area, buf)
+        })
+        .render_cell(1, |v, area, buf, _ctx| v.text.render(area, buf))
+        .render_cell(2, |v, area, buf, _ctx| {
+            num1_fmt.fmt_u(v.num1).render(area, buf)
+        })
+        .render_cell(3, |v, area, buf, _ctx| {
+            num2_fmt.fmt_u(v.num2).render(area, buf)
+        })
+        .render_cell(4, |v, area, buf, _ctx| {
+            let cc = if v.check { "\u{2622}" } else { "\u{2623}" };
+            cc.render(area, buf);
+        })
         .column_spacing(1)
         .header(vec!["Nr", "Text", "Val1", "Val2", "State"])
         .footer(vec!["a", "b", "c", "d", "e"])
         .block(
             Block::bordered()
                 .border_type(BorderType::Rounded)
-                .title("cell-selection"),
+                .title("rowrange-selection"),
         )
         .vscroll(Scroll::new())
         .flex(Flex::End)
         .styles(table(&ctx.theme))
-        .select_row_style(Some(ctx.theme.p.primary(1)))
-        .select_column_style(Some(ctx.theme.p.style_alias(Color::DOCUMENT_BASE_BG)))
-        .select_cell_style(Some(ctx.theme.p.primary(3)))
+        .select_row_style(Some(ctx.theme.p.gray(3)))
         .render(l0[0], buf, &mut state.table);
-
     Ok(())
 }
 
-fn table(th: &SalsaTheme) -> rat_table::TableStyle {
-    rat_table::TableStyle {
+fn table(th: &SalsaTheme) -> rat_ftable2::TableStyle {
+    rat_ftable2::TableStyle {
         style: th.style(Style::CONTAINER_BASE),
         select_row: Some(th.style(Style::SELECT)),
         show_row_focus: true,
@@ -145,7 +140,6 @@ fn event(
 ) -> Result<Outcome, anyhow::Error> {
     // override focus
     state.table.focus().set(true);
-
     event_flow!(state.table.handle(event, Regular));
 
     Ok(Outcome::Continue)

@@ -13,9 +13,9 @@ use format_num_pattern::NumberFormat;
 use rat_cursor::HasScreenCursor;
 use rat_event::{HandleEvent, Regular, event_flow};
 use rat_focus::{Focus, FocusBuilder, FocusFlag, HasFocus};
+use rat_ftable2::edit::{TableEdit, TableEditState};
+use rat_ftable2::event::Outcome;
 use rat_scrolled::Scroll;
-use rat_table::edit::{TableEdit, TableEditState};
-use rat_table::event::Outcome;
 use ratatui_core::buffer::Buffer;
 use ratatui_core::layout::{Constraint, Flex, Layout, Rect};
 use ratatui_core::widgets::{StatefulWidget, Widget};
@@ -133,8 +133,8 @@ mod editor {
     use rat_cursor::impl_screen_cursor;
     use rat_event::{HandleEvent, Regular, event_flow};
     use rat_focus::{FocusBuilder, impl_has_focus, match_focus};
-    use rat_table::edit::{TableEditor, TableEditorState};
-    use rat_table::event::Outcome;
+    use rat_ftable2::edit::{TableEditor, TableEditorState};
+    use rat_ftable2::event::Outcome;
     use ratatui_core::buffer::Buffer;
     use ratatui_core::layout::Rect;
     use ratatui_core::style::Style;
@@ -272,8 +272,8 @@ mod styles {
     use rat_theme4::theme::SalsaTheme;
     use ratatui_core::style::Style;
 
-    pub fn table_style(th: &SalsaTheme) -> rat_table::TableStyle {
-        rat_table::TableStyle {
+    pub fn table_style(th: &SalsaTheme) -> rat_ftable2::TableStyle {
+        rat_ftable2::TableStyle {
             style: th.style(Style::CONTAINER_BASE),
             select_row: Some(th.style(Style::SELECT)),
             show_row_focus: true,

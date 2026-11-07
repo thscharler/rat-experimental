@@ -1,16 +1,16 @@
 //!
-//! Single row selection.
+//! Example for [TableDataIter] used with [StatefulWidget]
 //!
 
 use crate::mini_salsa::mock_init;
 use crate::mini_salsa::{MiniSalsaState, run_ui, setup_logging};
 use format_num_pattern::NumberFormat;
 use rat_event::{HandleEvent, Regular, event_flow};
-use rat_focus::HasFocus;
+use rat_focus::{Focus, FocusBuilder, FocusFlag};
+use rat_ftable2::event::Outcome;
+use rat_ftable2::selection::row::RowSelection;
+use rat_ftable2::{Table, TableState};
 use rat_scrolled::{Scroll, ScrollStyle};
-use rat_table::event::Outcome;
-use rat_table::selection::row::RowSelection;
-use rat_table::{Table, TableState};
 use rat_theme4::StyleName;
 use rat_theme4::theme::SalsaTheme;
 use ratatui_core::buffer::Buffer;
@@ -36,18 +36,19 @@ fn main() -> Result<(), anyhow::Error> {
                 num2: rand::random(),
                 check: rand::random(),
             })
+            .take(100_000)
             .collect(),
         table: Default::default(),
     };
 
-    run_ui("row_selection", mock_init, event, render, &mut state)
+    run_ui("iter", mock_init, event, render, &mut state)
 }
 
 struct Sample {
-    pub(crate) text: &'static str,
-    pub(crate) num1: f32,
-    pub(crate) num2: f32,
-    pub(crate) check: bool,
+    text: &'static str,
+    num1: f32,
+    num2: f32,
+    check: bool,
 }
 
 struct State {
@@ -70,7 +71,7 @@ fn render(
     let num2_fmt = NumberFormat::new("####0.00").expect("fmt");
 
     Table::default()
-        .data(&state.table_data)
+        .data(state.table_data.iter())
         .widths([
             Constraint::Length(6),
             Constraint::Length(20),
@@ -98,18 +99,16 @@ fn render(
         .block(
             Block::bordered()
                 .border_type(BorderType::Rounded)
-                .title("row-selection"),
+                .title("tabledata-iter (no row-count)"),
         )
         .vscroll(Scroll::new())
-        .flex(Flex::End)
         .styles(table(&ctx.theme))
-        .select_row_style(Some(ctx.theme.p.gray(3)))
         .render(l0[0], buf, &mut state.table);
     Ok(())
 }
 
-fn table(th: &SalsaTheme) -> rat_table::TableStyle {
-    rat_table::TableStyle {
+fn table(th: &SalsaTheme) -> rat_ftable2::TableStyle {
+    rat_ftable2::TableStyle {
         style: th.style(Style::CONTAINER_BASE),
         select_row: Some(th.style(Style::SELECT)),
         show_row_focus: true,
@@ -133,13 +132,21 @@ fn scroll(th: &SalsaTheme) -> ScrollStyle {
     }
 }
 
+fn focus(state: &mut State) -> Focus {
+    let mut fb = FocusBuilder::new(None);
+    fb.widget(&state.table);
+    fb.widget(&FocusFlag::new());
+    fb.build()
+}
+
 fn event(
     event: &Event,
-    _ctx: &mut MiniSalsaState,
+    ctx: &mut MiniSalsaState,
     state: &mut State,
 ) -> Result<Outcome, anyhow::Error> {
-    // override focus
-    state.table.focus().set(true);
+    ctx.focus = Some(focus(state));
+    ctx.handle_focus(event);
+
     event_flow!(state.table.handle(event, Regular));
 
     Ok(Outcome::Continue)
